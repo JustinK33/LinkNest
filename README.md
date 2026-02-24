@@ -1,7 +1,8 @@
 # LinkNest
 
-A scalable multi-tenant link-in-bio platform that allows users to create customizable public profile pages and track real-time analytics through optimized, write-heavy event logging.
 [![CI](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml)
+
+A scalable multi-tenant link-in-bio platform that allows users to create customizable public profile pages and track real-time analytics through optimized, write-heavy event logging.
 
 ---
 
