@@ -1,0 +1,29 @@
+<%= form_with model: product do |form| %>
+    <% if form.object.errors.any? %>
+        <p class="error"><%= form.object.errors.full_messages.first %></p>
+    <% end %>
+
+    <div>
+        <%= form.label :name %>
+        <%= form.text_field :name %>
+    </div>
+
+    <div>
+        <%= form.label :description, style: "display: block" %>
+        <%= form.rich_textarea :description %>
+    </div>
+
+    <div>
+        <%= form.label :featured_image, style: "display: block" %>
+        <%= form.file_field :featured_image, accept: "image/*"%>
+    </div>
+
+    <div>
+        <%= form.label :inventory_count, style: "display: block"%>
+        <%= form.number_field :inventory_count %>
+    </div>
+
+    <div>
+        <%= form.submit %>
+    </div>
+<% end %>
