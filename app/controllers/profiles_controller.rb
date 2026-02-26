@@ -1,6 +1,6 @@
 class ProfilesController < ApplicationController
   allow_unauthenticated_access
-  
+
   def show
     # Mock user data - in production this would find by username
     @profile_user = {
@@ -9,7 +9,7 @@ class ProfilesController < ApplicationController
       bio: "Designer & Developer building cool stuff on the internet. Passionate about creating beautiful user experiences.",
       avatar_url: nil
     }
-    
+
     # Mock visible links
     @links = [
       { id: 1, title: "My Portfolio", url: "https://example.com/portfolio" },

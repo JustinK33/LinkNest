@@ -7,7 +7,7 @@ class DashboardController < ApplicationController
       { id: 2, title: "GitHub", url: "https://github.com/username", visible: true, position: 2 },
       { id: 3, title: "Draft Project", url: "https://example.com/draft", visible: false, position: 3 }
     ]
-    
+
     # Mock analytics data for UI placeholders
     @analytics = {
       total_views: 1234,

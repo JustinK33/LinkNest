@@ -10,13 +10,13 @@ Rails.application.routes.draw do
   root "pages#home"
 
   resources :users, only: [ :new, :create ]
-  
+
   # Dashboard
   get "dashboard", to: "dashboard#show", as: :dashboard
-  
+
   # Links CRUD
   resources :links
-  
+
   # Public profiles - must be last to not override other routes
   get "/:username", to: "profiles#show", as: :profile
 end
