@@ -67,6 +67,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
 
     # services:
     #  redis:
@@ -92,6 +95,9 @@ jobs:
 
   system-test:
     runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
 
     # services:
     #  redis:
