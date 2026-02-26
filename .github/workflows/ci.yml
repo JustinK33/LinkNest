@@ -70,6 +70,8 @@ jobs:
     env:
       RAILS_ENV: test
       DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      # REDIS_URL: redis://localhost:6379/0
 
     # services:
     #  redis:
@@ -90,14 +92,16 @@ jobs:
         run: DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bin/rails db:test:prepare
         
       - name: Run tests
-          # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          # REDIS_URL: redis://localhost:6379/0
         run: bin/rails test
         
-      - name: Run System Tests
-          # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails test:system
+      - name: Run System Tests (if present)
+        run: |
+          shopt -s globstar
+          if ls test/system/**/*_test.rb 1> /dev/null 2>&1; then
+            bin/rails test test/system/**/*_test.rb
+          else
+            echo "No system tests found; skipping."
+          fi
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
