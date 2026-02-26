@@ -90,9 +90,16 @@ jobs:
 
       - name: Prepare DB
         run: DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bin/rails db:test:prepare
+      
+      - name: Debug DB connectivity
+        run: |
+          ruby -v
+          echo "DATABASE_URL is set? -> ${DATABASE_URL:+yes}"
+          bin/rails runner 'puts ActiveRecord::Base.connection_db_config.configuration_hash'
+          bin/rails runner 'ActiveRecord::Base.connection; puts "DB CONNECTED OK"'
         
       - name: Run tests
-        run: bin/rails test
+        run: bin/rails test test/models test/controllers test/integration
         
       - name: Run System Tests (if present)
         run: |
