@@ -1,0 +1,66 @@
+<% content_for :title, "#{@profile_user[:display_name]} (@#{@profile_user[:username]}) - LinkNest" %>
+
+<div class="container-sm" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <!-- Public Profile Header -->
+  <div class="card">
+    <div class="profile-card">
+      <div class="profile-avatar" style="width: 120px; height: 120px; font-size: 2.5rem;">
+        <% if @profile_user[:avatar_url].present? %>
+          <%= image_tag @profile_user[:avatar_url], alt: @profile_user[:display_name], style: "width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" %>
+        <% else %>
+          <%= @profile_user[:display_name].split.map(&:first).join.upcase %>
+        <% end %>
+      </div>
+      
+      <div class="profile-info">
+        <div class="profile-name">
+          <%= @profile_user[:display_name] %>
+        </div>
+        <div class="profile-username">
+          @<%= @profile_user[:username] %>
+        </div>
+        <% if @profile_user[:bio].present? %>
+          <div class="profile-bio">
+            <%= simple_format(@profile_user[:bio]) %>
+          </div>
+        <% else %>
+          <div class="profile-bio" style="color: var(--color-gray-400); font-style: italic;">
+            This user hasn't added a bio yet.
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Links -->
+  <% if @links.any? %>
+    <div style="margin-top: 2rem;">
+      <ul class="public-links-list">
+        <% @links.each do |link| %>
+          <li>
+            <%= link_to link[:url], class: "public-link-card", target: "_blank", rel: "noopener noreferrer" do %>
+              <h3 class="public-link-title">
+                <%= link[:title] %>
+              </h3>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% else %>
+    <div class="card" style="margin-top: 2rem;">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔗</div>
+        <h3>No links yet</h3>
+        <p>@<%= @profile_user[:username] %> hasn't shared any links yet</p>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Footer attribution -->
+  <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--color-gray-200);">
+    <p style="color: var(--color-gray-500); font-size: 0.875rem;">
+      Powered by <%= link_to "LinkNest", root_path %> 🔗
+    </p>
+  </div>
+</div>

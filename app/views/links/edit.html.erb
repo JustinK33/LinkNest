@@ -1,0 +1,14 @@
+<% content_for :title, "Edit Link - LinkNest" %>
+
+<div class="container-md" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Edit link</h1>
+      <p>Update your link details</p>
+    </div>
+
+    <%= form_with url: link_path(@link[:id]), method: :patch do |form| %>
+      <%= render "form", form: form %>
+    <% end %>
+  </div>
+</div>

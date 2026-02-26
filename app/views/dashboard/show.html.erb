@@ -1,0 +1,131 @@
+<% content_for :title, "Dashboard - LinkNest" %>
+
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <!-- Profile Card -->
+  <div class="card">
+    <div class="profile-card">
+      <div class="profile-avatar">
+        <%= @user.first_name[0].upcase %><%= @user.last_name[0].upcase %>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">
+          <%= @user.first_name %> <%= @user.last_name %>
+        </div>
+        <div class="profile-username">
+          @<%= @user.username %>
+        </div>
+        <div class="profile-bio">
+          <% if @user.respond_to?(:bio) && @user.bio.present? %>
+            <%= @user.bio %>
+          <% else %>
+            <em style="color: var(--color-gray-400);">No bio yet. Add one to tell visitors about yourself!</em>
+          <% end %>
+        </div>
+        <div class="profile-actions">
+          <%= link_to "View public profile", profile_path(@user.username), class: "btn btn-secondary btn-sm", target: "_blank" %>
+          <%= link_to "Edit profile", "#", class: "btn btn-secondary btn-sm" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Section -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">📊 Analytics</h3>
+      <span style="font-size: 0.875rem; color: var(--color-gray-500);">Last 7 days</span>
+    </div>
+    
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="analytics-value"><%= @analytics[:views_7d] %></div>
+        <div class="analytics-label">Profile Views</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= @analytics[:clicks_7d] %></div>
+        <div class="analytics-label">Link Clicks</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= @analytics[:total_views] %></div>
+        <div class="analytics-label">Total Views</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= @analytics[:total_clicks] %></div>
+        <div class="analytics-label">Total Clicks</div>
+      </div>
+    </div>
+
+    <h4 style="margin-bottom: 1rem;">Top Links</h4>
+    <table class="analytics-table">
+      <thead>
+        <tr>
+          <th>Link Title</th>
+          <th style="text-align: right;">Clicks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @analytics[:top_links].each do |link| %>
+          <tr>
+            <td><%= link[:title] %></td>
+            <td style="text-align: right; font-weight: 600;"><%= link[:clicks] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Links Section -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">🔗 My Links</h3>
+      <%= link_to "New Link", new_link_path, class: "btn btn-primary btn-sm" %>
+    </div>
+
+    <% if @links.any? %>
+      <ul class="links-list">
+        <% @links.each do |link| %>
+          <li class="link-item">
+            <div class="link-drag-handle" title="Drag to reorder">
+              ⋮⋮
+            </div>
+            
+            <div class="link-content">
+              <div class="link-title">
+                <%= link[:title] %>
+                <% if link[:visible] %>
+                  <span class="link-badge link-badge-visible">Visible</span>
+                <% else %>
+                  <span class="link-badge link-badge-hidden">Hidden</span>
+                <% end %>
+              </div>
+              <div class="link-url">
+                <%= link[:url] %>
+              </div>
+            </div>
+
+            <div class="link-actions">
+              <%= link_to "↑", "#", class: "btn btn-sm btn-secondary", title: "Move up" %>
+              <%= link_to "↓", "#", class: "btn btn-sm btn-secondary", title: "Move down" %>
+              <%= link_to "Edit", edit_link_path(link[:id]), class: "btn btn-sm btn-secondary" %>
+              <%= button_to "Delete", link_path(link[:id]), 
+                           method: :delete, 
+                           class: "btn btn-sm btn-danger",
+                           form: { data: { turbo_confirm: "Are you sure you want to delete this link?" } } %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+
+      <p style="color: var(--color-gray-500); font-size: 0.875rem; margin-top: 1rem;">
+        💡 Tip: Use the ⋮⋮ handle to drag and reorder links, or use the ↑ ↓ buttons
+      </p>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔗</div>
+        <h3>No links yet</h3>
+        <p>Create your first link to get started sharing with the world</p>
+        <%= link_to "Create your first link", new_link_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

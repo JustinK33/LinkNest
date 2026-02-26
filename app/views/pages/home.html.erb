@@ -1,0 +1,85 @@
+<% content_for :title, "LinkNest - Your Links, Your Way" %>
+
+<div class="container-md" style="padding-top: 4rem; padding-bottom: 4rem;">
+  <% if authenticated? %>
+    <!-- Authenticated Home -->
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Welcome back, <%= Current.session.user.first_name %>! 👋</h1>
+      <p style="font-size: 1.25rem; color: var(--color-gray-600); margin-bottom: 2rem;">
+        Ready to manage your links?
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <%= link_to "Go to Dashboard", dashboard_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "View My Profile", profile_path(Current.session.user.username), class: "btn btn-secondary btn-lg" %>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom: 1rem;">Quick Stats</h3>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="analytics-value">3</div>
+          <div class="analytics-label">Total Links</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value">89</div>
+          <div class="analytics-label">Profile Views</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value">54</div>
+          <div class="analytics-label">Link Clicks</div>
+        </div>
+      </div>
+    </div>
+  <% else %>
+
+    <div style="text-align: center; margin-bottom: 4rem;">
+      <h1 style="font-size: 3rem; margin-bottom: 1rem; line-height: 1.1;">
+        Your Links,<br>
+        <span style="color: var(--color-primary);">Your Way</span>
+      </h1>
+      <p style="font-size: 1.25rem; color: var(--color-gray-600); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+        Create a beautiful landing page for all your links. Share your portfolio, social media, and more in one place.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <%= link_to "Get Started Free", new_user_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "Sign In", new_session_path, class: "btn btn-secondary btn-lg" %>
+      </div>
+    </div>
+
+    <!-- Features Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🔗</div>
+        <h3>Unlimited Links</h3>
+        <p style="color: var(--color-gray-600);">
+          Add as many links as you want. No limits, no restrictions.
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+        <h3>Track Analytics</h3>
+        <p style="color: var(--color-gray-600);">
+          See how many people view your profile and click your links.
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+        <h3>Customize Your Page</h3>
+        <p style="color: var(--color-gray-600);">
+          Make it yours with a custom bio, avatar, and link order.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); border: none; color: white; text-align: center; padding: 3rem;">
+      <h2 style="color: white; margin-bottom: 1rem;">Ready to get started?</h2>
+      <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.125rem; margin-bottom: 2rem;">
+        Join thousands of creators sharing their links with LinkNest
+      </p>
+      <%= link_to "Create Your Free Account", new_user_path, class: "btn btn-lg", style: "background-color: white; color: var(--color-primary);" %>
+    </div>
+  <% end %>
+</div>

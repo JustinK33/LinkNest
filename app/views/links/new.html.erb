@@ -1,0 +1,14 @@
+<% content_for :title, "New Link - LinkNest" %>
+
+<div class="container-md" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Create a new link</h1>
+      <p>Add a link to share on your public profile</p>
+    </div>
+
+    <%= form_with url: links_path, method: :post do |form| %>
+      <%= render "form", form: form %>
+    <% end %>
+  </div>
+</div>

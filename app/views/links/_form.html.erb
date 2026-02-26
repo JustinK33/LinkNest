@@ -1,0 +1,33 @@
+<div class="form-group">
+  <%= form.label :title, "Link title" %>
+  <%= form.text_field :title, 
+                      required: true, 
+                      placeholder: "My Portfolio",
+                      value: @link[:title] %>
+  <div class="form-hint">Give your link a descriptive name</div>
+</div>
+
+<div class="form-group">
+  <%= form.label :url, "URL" %>
+  <%= form.url_field :url, 
+                     required: true, 
+                     placeholder: "https://example.com",
+                     value: @link[:url] %>
+  <div class="form-hint">The destination URL (must include https://)</div>
+</div>
+
+<div class="form-group">
+  <%= form.label :visible, "Visibility" %>
+  <div style="display: flex; align-items: center; gap: 0.5rem;">
+    <%= form.check_box :visible, 
+                       checked: @link[:visible],
+                       style: "width: auto; margin: 0;" %>
+    <span style="color: var(--color-gray-600);">Show this link on my public profile</span>
+  </div>
+  <div class="form-hint">Hidden links are only visible to you in the dashboard</div>
+</div>
+
+<div class="btn-group" style="margin-top: 2rem;">
+  <%= form.submit "Save link", class: "btn btn-primary" %>
+  <%= link_to "Cancel", dashboard_path, class: "btn btn-secondary" %>
+</div>

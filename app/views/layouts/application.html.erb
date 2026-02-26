@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Store" %></title>
+    <title><%= content_for(:title) || "LinkNest - Your Links, Your Way" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Store">
+    <meta name="application-name" content="LinkNest">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -24,15 +21,45 @@
   </head>
 
   <body>
-    <nav>
-        <%= link_to "Home", root_path %>
-        <%= button_to "Log out", session_path, method: :delete if authenticated? %>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <%= link_to root_path, class: "navbar-brand" do %>
+          🔗 LinkNest
+        <% end %>
+        
+        <div class="navbar-links">
+          <% if authenticated? %>
+            <%= link_to "Dashboard", dashboard_path %>
+            <%= link_to "Profile", profile_path(Current.session.user.username) %>
+            <%= button_to "Log out", session_path, method: :delete, class: "btn btn-sm btn-secondary" %>
+          <% else %>
+            <%= link_to "Sign in", new_session_path %>
+            <%= link_to "Register", new_user_path, class: "btn btn-sm btn-primary" %>
+          <% end %>
+        </div>
+      </div>
     </nav>
 
+    <!-- Flash Messages -->
+    <% if flash[:notice].present? || flash[:alert].present? %>
+      <div class="flash-container">
+        <% if flash[:notice].present? %>
+          <div class="flash notice">
+            <%= flash[:notice] %>
+          </div>
+        <% end %>
+        <% if flash[:alert].present? %>
+          <div class="flash alert">
+            <%= flash[:alert] %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Main Content -->
     <main>
-        <%= yield %>
-        <div class="notice"><%= flash[:notice] %></div>
-        <div class="alert"><%= flash[:alert] %></div>
+      <%= yield %>
     </main>
   </body>
 </html>
