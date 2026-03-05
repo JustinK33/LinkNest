@@ -10,7 +10,7 @@
       </p>
       <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
         <%= link_to "Go to Dashboard", dashboard_path, class: "btn btn-primary btn-lg" %>
-        <%= link_to "View My Profile", profile_path(Current.session.user.username), class: "btn btn-secondary btn-lg" %>
+        <%= link_to "View My Profile", user_profile_path(Current.session.user.slug), class: "btn btn-secondary btn-lg" %>
       </div>
     </div>
 

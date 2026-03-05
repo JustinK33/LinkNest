@@ -14,9 +14,11 @@ Rails.application.routes.draw do
   # Dashboard
   get "dashboard", to: "dashboard#show", as: :dashboard
 
-  # Links CRUD
+  # Links CRUD + Click tracking
   resources :links
+  post "/links/:id/track_click", to: "links_tracking#track_click", as: :track_click_link
 
-  # Public profiles - must be last to not override other routes
-  get "/:username", to: "profiles#show", as: :profile
+  # Public profiles - slug-based routing with constraint (must be last to not override other routes)
+  # SlugConstraint ensures: reserved words blocked, slug must exist in database
+  get "/:slug", to: "profiles#show", as: :user_profile, constraints: SlugConstraint.new
 end

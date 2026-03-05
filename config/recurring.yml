@@ -13,3 +13,16 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # Analytics aggregation jobs
+  aggregate_hourly_stats:
+    class: AggregateHourlyStatsJob
+    queue: analytics
+    schedule: every hour at minute 5
+    priority: 10  # Higher priority for analytics
+
+  aggregate_daily_stats:
+    class: AggregateDailyStatsJob
+    queue: analytics
+    schedule: at 2am every day
+    priority: 10

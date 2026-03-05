@@ -1,27 +1,27 @@
-<% content_for :title, "#{@profile_user[:display_name]} (@#{@profile_user[:username]}) - LinkNest" %>
+<% content_for :title, "#{@user.first_name} #{@user.last_name} (@#{@user.slug}) - LinkNest" %>
 
-<div class="container-sm" style="padding-top: 2rem; padding-bottom: 4rem;">
+<div class="container-sm" style="padding-top: 2rem; padding-bottom: 4rem;" data-controller="profile">
   <!-- Public Profile Header -->
   <div class="card">
     <div class="profile-card">
-      <div class="profile-avatar" style="width: 120px; height: 120px; font-size: 2.5rem;">
-        <% if @profile_user[:avatar_url].present? %>
-          <%= image_tag @profile_user[:avatar_url], alt: @profile_user[:display_name], style: "width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" %>
+      <div class="profile-avatar" style="width: 120px; height: 120px; font-size: 2.5rem; background-color: <%= @user.profile_color %>; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;">
+        <% if @user.avatar_url.present? %>
+          <%= image_tag @user.avatar_url, alt: "#{@user.first_name} #{@user.last_name}", style: "width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" %>
         <% else %>
-          <%= @profile_user[:display_name].split.map(&:first).join.upcase %>
+          <%= "#{@user.first_name} #{@user.last_name}".split.map(&:first).join.upcase %>
         <% end %>
       </div>
       
       <div class="profile-info">
         <div class="profile-name">
-          <%= @profile_user[:display_name] %>
+          <%= "#{@user.first_name} #{@user.last_name}" %>
         </div>
         <div class="profile-username">
-          @<%= @profile_user[:username] %>
+          @<%= @user.slug %>
         </div>
-        <% if @profile_user[:bio].present? %>
+        <% if @user.bio.present? %>
           <div class="profile-bio">
-            <%= simple_format(@profile_user[:bio]) %>
+            <%= simple_format(@user.bio) %>
           </div>
         <% else %>
           <div class="profile-bio" style="color: var(--color-gray-400); font-style: italic;">
@@ -38,9 +38,9 @@
       <ul class="public-links-list">
         <% @links.each do |link| %>
           <li>
-            <%= link_to link[:url], class: "public-link-card", target: "_blank", rel: "noopener noreferrer" do %>
+            <%= link_to link.url, class: "public-link-card", target: "_blank", rel: "noopener noreferrer", data: { action: "click->profile#trackClick", link_id: link.id } do %>
               <h3 class="public-link-title">
-                <%= link[:title] %>
+                <%= link.title %>
               </h3>
             <% end %>
           </li>
@@ -52,7 +52,7 @@
       <div class="empty-state">
         <div class="empty-state-icon">🔗</div>
         <h3>No links yet</h3>
-        <p>@<%= @profile_user[:username] %> hasn't shared any links yet</p>
+        <p>@<%= @user.slug %> hasn't shared any links yet</p>
       </div>
     </div>
   <% end %>
