@@ -18,7 +18,7 @@ class PasswordsController < ApplicationController
   end
 
   def update
-    if @user.update(params.permit(:password, :password_confirmation))
+    if @user.update(password: params[:password], password_confirmation: params[:password_confirmation])
       @user.sessions.destroy_all
       redirect_to new_session_path, notice: "Password has been reset."
     else

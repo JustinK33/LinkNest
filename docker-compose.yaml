@@ -1,9 +1,31 @@
+version: '3.8'
+
 services:
   web:
-    build: .
+    build: .  # Build from the Dockerfile in this directory
+    container_name: linknest_web
     env_file:
       - .env
-    ports:
-      - "80:80"
     environment:
       RAILS_ENV: development
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "3000:3000"  # Puma server (access via http://localhost:3000)
+    volumes:
+      - .:/rails  # Mount current directory into container
+      - bundle:/usr/local/bundle  # Cache gems between runs
+    command: ./bin/rails server -b 0.0.0.0 -p 3000
+
+  job_processor:
+    build: .
+    container_name: linknest_jobs
+    env_file:
+      - .env
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: ${DATABASE_URL}  # Use remote database from .env
+    command: ./bin/jobs run
+
+# Named volumes - persist data between container restarts
+volumes:
+  bundle:       # Ruby gems cache

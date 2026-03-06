@@ -2,6 +2,7 @@
 
 one:
   username: fake_user
+  slug: fake_user
   first_name: One
   last_name: User
   email_address: one@example.com
@@ -9,6 +10,7 @@ one:
 
 two:
   username: fake_user1
+  slug: fake_user1
   first_name: Two
   last_name: User
   email_address: two@example.com
