@@ -71,12 +71,6 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 - **Aggressive MySQL Indexing**
   Implemented compound indexes (profile_id, occurred_at) and unique constraints to maintain performance under scale.
 
-- **Integrated Continuous Integration**
-  Implemented GitHub action workflows for continuous integration and continuous delivery
-   
-- **Background Processing with Sidekiq**
-  Built asynchronous aggregation jobs to maintain responsive dashboards while handling high event volume.
-
 ---
 
 ## Running the Project
