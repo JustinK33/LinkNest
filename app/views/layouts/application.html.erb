@@ -11,8 +11,8 @@
 
     <%= yield :head %>
 
-    <link rel="icon" href="/linktestlogo.png" type="image/png">
-    <link rel="apple-touch-icon" href="/linktestlogo.png">
+    <link rel="icon" href="/linknestlogo.png" type="image/png">
+    <link rel="apple-touch-icon" href="/linknestlogo.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
@@ -24,7 +24,7 @@
     <nav class="navbar">
       <div class="navbar-container">
         <%= link_to root_path, class: "navbar-brand" do %>
-          <span class="navbar-brand-mark"><%= image_tag "/linktestlogo.png", alt: "LinkNest logo", class: "brand-logo-image" %></span>
+          <span class="navbar-brand-mark"><%= image_tag "/linknestlogo.png", alt: "LinkNest logo", class: "brand-logo-image" %></span>
           <span class="navbar-brand-text">LinkNest</span>
         <% end %>
         
