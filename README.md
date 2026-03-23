@@ -14,8 +14,9 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 - Ruby
 - Ruby on Rails
 - MySQL
+- AWS EC2
 - Nginx
-- Devise
+- Active Storage
 - Docker
 
 ---
