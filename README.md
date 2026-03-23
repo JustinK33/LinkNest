@@ -17,6 +17,7 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 - Ruby
 - Ruby on Rails
 - MySQL
+- SQL
 - AWS EC2
 - Nginx
 - Active Storage
@@ -38,7 +39,7 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 
 ### Resume File Management
 - Upload, preview, and download PDF resumes from profiles
-- Managed with Active Storage for safe file handling
+- Managed with **Active Storage** for safe file handling
 - Unified link and file experience in a single profile flow
 
 ### Analytics Pipeline Design
