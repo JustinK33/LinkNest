@@ -20,7 +20,7 @@
         </div>
 
         <h1 class="dashboard-profile-name"><%= @user.username %></h1>
-        <p class="dashboard-profile-url"><%= link_to "#{request.base_url}#{user_profile_path(@user.slug)}", user_profile_path(@user.slug) %></p>
+        <p class="dashboard-profile-url"><%= link_to public_profile_url(@user), public_profile_url(@user) %></p>
       </div>
 
       <article class="dashboard-card">
@@ -49,10 +49,10 @@
       <article class="dashboard-card">
         <header class="dashboard-card-header">
           <h2>Alias</h2>
-          <%= link_to "↗", user_profile_path(@user.slug), class: "dashboard-icon-action", aria: { label: "Open public profile" } %>
+          <%= link_to "↗", public_profile_url(@user), class: "dashboard-icon-action", aria: { label: "Open public profile" } %>
         </header>
 
-        <p class="dashboard-alias"><%= link_to "@#{@user.slug}", user_profile_path(@user.slug) %></p>
+        <p class="dashboard-alias"><%= link_to "@#{@user.slug}", public_profile_url(@user) %></p>
       </article>
     </section>
 
@@ -125,7 +125,7 @@
     <section class="workspace-panel" data-panel="preview" hidden>
       <article class="dashboard-card empty">
         <h3>Preview is coming soon</h3>
-        <p>Open your live page at <%= link_to user_profile_path(@user.slug), user_profile_path(@user.slug) %>.</p>
+        <p>Open your live page at <%= link_to public_profile_url(@user), public_profile_url(@user) %>.</p>
       </article>
     </section>
   </div>

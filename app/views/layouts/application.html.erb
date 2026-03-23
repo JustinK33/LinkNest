@@ -32,7 +32,7 @@
         <div class="navbar-links">
           <% if authenticated? %>
             <%= link_to "Dashboard", dashboard_path %>
-            <%= link_to "Profile", user_profile_path(Current.session.user.slug) %>
+            <%= link_to "Profile", public_profile_url(Current.session.user) %>
             <%= button_to "Log out", session_path, method: :delete, class: "btn btn-sm btn-secondary" %>
           <% else %>
             <%= link_to "Sign in", new_session_path, class: "btn btn-sm btn-secondary" %>
