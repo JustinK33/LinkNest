@@ -4,18 +4,18 @@
   <section class="home-auth">
     <div class="container-md home-auth-inner">
       <p class="home-auth-kicker">Welcome back</p>
-      <h1>Everything is ready, <%= Current.session.user.first_name %>.</h1>
+      <h1>Everything is ready, <%= current_user.first_name %>.</h1>
       <p class="home-auth-copy">Manage your links, upload your resume, and publish updates in seconds.</p>
       <div class="home-auth-actions">
         <%= link_to "Open Dashboard", dashboard_path, class: "btn btn-primary btn-lg" %>
-        <%= link_to "View Public Profile", public_profile_url(Current.session.user), class: "btn btn-secondary btn-lg" %>
+        <%= link_to "View Public Profile", public_profile_url(current_user), class: "btn btn-secondary btn-lg" %>
       </div>
     </div>
   </section>
 <% else %>
   <section class="landing-hero">
     <div class="container-md landing-hero-inner">
-      <div class="landing-mark">LN</div>
+      <div class="landing-mark"><%= image_tag "/linktestlogo.png", alt: "LinkNest logo", class: "landing-logo-image" %></div>
       <h1>One page for every important link.</h1>
       <p>Build your profile, add links and resume files, then share one clean URL everywhere you show up online.</p>
       <div class="landing-hero-actions">
@@ -29,7 +29,7 @@
     <div class="container landing-feature-grid">
       <div class="landing-phone-mock" aria-hidden="true">
         <div class="landing-phone-brand">
-          <div class="landing-phone-logo">LN</div>
+          <div class="landing-phone-logo"><%= image_tag "/linktestlogo.png", alt: "LinkNest logo", class: "phone-logo-image" %></div>
           <p class="phone-title">LinkNest</p>
           <p class="phone-subtitle">One link for all your links</p>
         </div>

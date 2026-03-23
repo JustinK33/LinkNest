@@ -2,7 +2,7 @@
 
 # Load Rails environment
 ENV['RAILS_ENV'] ||= 'test'
-require_relative 'config/environment'
+require_relative '../../config/environment'
 
 puts "🔍 Testing Click Tracking & Aggregation Pipeline"
 puts "=" * 60
@@ -21,7 +21,7 @@ puts "Link: #{link.title} (ID: #{link.id})"
 puts ""
 
 # Clear test data
-Link Click.delete_all
+LinkClick.delete_all
 HourlyLinkStat.delete_all
 
 # Simulate 3 clicks

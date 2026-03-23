@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 ENV['RAILS_ENV'] ||= 'development'
-require_relative 'config/environment'
+require_relative '../../config/environment'
 
 puts "📈 Testing Aggregation Pipeline"
 puts "=" * 60

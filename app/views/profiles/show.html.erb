@@ -5,7 +5,9 @@
   <div class="card">
     <div class="profile-card">
       <div class="profile-avatar" style="width: 120px; height: 120px; font-size: 2.5rem; background-color: <%= @user.profile_color %>; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;">
-        <% if @user.avatar_url.present? %>
+        <% if @user.avatar.attached? %>
+          <%= image_tag @user.avatar, alt: "#{@user.first_name} #{@user.last_name}", style: "width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" %>
+        <% elsif @user.avatar_url.present? %>
           <%= image_tag @user.avatar_url, alt: "#{@user.first_name} #{@user.last_name}", style: "width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" %>
         <% else %>
           <%= "#{@user.first_name} #{@user.last_name}".split.map(&:first).join.upcase %>

@@ -1,31 +1,55 @@
-version: '3.8'
-
 services:
   web:
-    build: .  # Build from the Dockerfile in this directory
-    container_name: linknest_web
+    build:
+      context: .
+    image: linknest:latest
     env_file:
       - .env
     environment:
-      RAILS_ENV: development
-      DATABASE_URL: ${DATABASE_URL}
+      RAILS_ENV: production
+      RACK_ENV: production
+      DATABASE_URL: ${PROD_DATABASE_URL:-${DATABASE_URL}}
+      RAILS_LOG_TO_STDOUT: "1"
+      RAILS_SERVE_STATIC_FILES: "1"
     ports:
-      - "3000:3000"  # Puma server (access via http://localhost:3000)
+      - "3000:80"
     volumes:
-      - .:/rails  # Mount current directory into container
-      - bundle:/usr/local/bundle  # Cache gems between runs
-    command: ./bin/rails server -b 0.0.0.0 -p 3000
+      - bundle:/usr/local/bundle
+      - storage:/rails/storage
+      - log:/rails/log
+      - tmp:/rails/tmp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   job_processor:
-    build: .
-    container_name: linknest_jobs
+    image: linknest:latest
+    build:
+      context: .
     env_file:
       - .env
     environment:
-      RAILS_ENV: development
-      DATABASE_URL: ${DATABASE_URL}  # Use remote database from .env
+      RAILS_ENV: production
+      RACK_ENV: production
+      DATABASE_URL: ${PROD_DATABASE_URL:-${DATABASE_URL}}
+      RAILS_LOG_TO_STDOUT: "1"
     command: ./bin/jobs run
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - bundle:/usr/local/bundle
+      - storage:/rails/storage
+      - log:/rails/log
+      - tmp:/rails/tmp
+    restart: unless-stopped
 
-# Named volumes - persist data between container restarts
 volumes:
-  bundle:       # Ruby gems cache
+  bundle:
+  storage:
+  log:
+  tmp:

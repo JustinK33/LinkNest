@@ -12,7 +12,9 @@
     <section class="workspace-panel is-active" data-panel="profile">
       <div class="dashboard-profile-header">
         <div class="dashboard-profile-avatar" style="background-color: <%= @user.profile_color.presence || '#0ea5e9' %>;">
-          <% if @user.avatar_url.present? %>
+          <% if @user.avatar.attached? %>
+            <%= image_tag @user.avatar, alt: "#{@user.first_name} #{@user.last_name}", class: "dashboard-profile-image" %>
+          <% elsif @user.avatar_url.present? %>
             <%= image_tag @user.avatar_url, alt: "#{@user.first_name} #{@user.last_name}", class: "dashboard-profile-image" %>
           <% else %>
             <%= "#{@user.first_name} #{@user.last_name}".split.map(&:first).join.upcase %>

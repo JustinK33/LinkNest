@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   has_secure_password
+  has_one_attached :avatar
   has_many :sessions, dependent: :destroy
   has_many :links, dependent: :destroy
   has_many :link_clicks, dependent: :destroy
@@ -25,6 +26,7 @@ class User < ApplicationRecord
     with: PASSWORD_FORMAT,
     message: "must be at least 8 characters and include 1 number and 1 special character"
   }, if: :password_present?
+  validate :avatar_is_valid_image
   validate :slug_available_for_username, on: :create
 
   before_validation :generate_slug, on: :create
@@ -57,5 +59,17 @@ class User < ApplicationRecord
 
       errors.add(:username, "is already taken")
       errors.add(:slug, "has already been taken")
+    end
+
+    def avatar_is_valid_image
+      return unless avatar.attached?
+
+      unless avatar.content_type.in?([ "image/png", "image/jpeg", "image/jpg", "image/webp" ])
+        errors.add(:avatar, "must be a PNG, JPG, or WEBP image")
+      end
+
+      return unless avatar.byte_size > 5.megabytes
+
+      errors.add(:avatar, "must be 5MB or smaller")
     end
 end
