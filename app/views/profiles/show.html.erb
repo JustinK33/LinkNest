@@ -39,7 +39,7 @@
       <ul class="public-links-list">
         <% @links.each do |link| %>
           <li>
-            <%= link_to link.url, class: "public-link-card", data: { action: "click->profile#trackClick", link_id: link.id } do %>
+            <%= link_to(url_from(link.url) || "#", class: "public-link-card", data: { action: "click->profile#trackClick", link_id: link.id }) do %>
               <h3 class="public-link-title">
                 <%= link.title %>
               </h3>

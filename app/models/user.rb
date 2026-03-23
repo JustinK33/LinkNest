@@ -16,10 +16,11 @@ class User < ApplicationRecord
   validates :first_name, presence: true
   validates :last_name, presence: true
   validates :email_address, presence: true, uniqueness: { case_sensitive: false }
-  validates :slug, presence: true, uniqueness: true, format: {
+  validates :slug, presence: true, uniqueness: true
+  validates :slug, format: {
     with: SLUG_FORMAT,
     message: "can only contain lowercase letters, numbers, and hyphens"
-  }
+  }, if: :validate_slug_format?
   validates :password, format: {
     with: PASSWORD_FORMAT,
     message: "must be at least 8 characters and include 1 number and 1 special character"
@@ -33,6 +34,10 @@ class User < ApplicationRecord
   end
 
   private
+    def validate_slug_format?
+      new_record? || will_save_change_to_slug?
+    end
+
     def password_present?
       password.present?
     end
