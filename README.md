@@ -14,8 +14,7 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 - Ruby
 - Ruby on Rails
 - MySQL
-- Redis
-- Sidekiq
+- Nginx
 - Devise
 - Docker
 
@@ -23,15 +22,40 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 
 ## Features (updating...)
 
-- **Multi-Tenant Architecture**
-  - Users can create multiple profile pages
-  - Slug-based routing (yourapp.com/justin)
-  - Strict ownership scoping for secure data isolation
+# Multi-Tenant Profile Architecture
+- Unique slug-based public profiles (`yourapp.com/username`)
+- Strict ownership scoping for secure user data isolation
+- Designed for scalable profile-based SaaS systems
 
-- **Optimized Read-Heavy Endpoints**
-  - Indexed slug lookups
-  - ETag / Last-Modified caching headers
-  - Cache invalidation tied to profile updates
+# Optimized Read-Heavy Profile Delivery
+- Indexed slug lookups for fast profile resolution
+- ETag / Last-Modified headers for efficient browser caching
+- Cache invalidation tied to profile content updates
+
+# Resume File Management
+- Upload, preview, and download PDF resumes from profiles
+- Managed with Active Storage for safe file handling
+- Unified link and file experience in a single profile flow
+
+# Analytics Pipeline Design
+- Captures click events separately from reporting reads
+- Background jobs aggregate data into hourly/daily metrics
+- Enables scalable analytics without impacting request latency
+
+# Production Deployment Architecture
+- Dockerized Rails app for consistent environments
+- Nginx reverse proxy with HTTPS/TLS configuration
+- Ready for internet-facing production deployment
+
+# Authentication and Access Control
+- Devise-based authentication for user account management
+- Ownership checks prevent cross-user data access
+- Clear separation of public and private routes
+
+# Security and Reliability Hardening
+- Strong validations and uniqueness constraints
+- Safer URL handling and session/auth edge-case fixes
+- Dependency auditing and vulnerability patching
 
 ---
 
