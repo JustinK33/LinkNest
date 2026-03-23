@@ -1,9 +1,12 @@
 # LinkNest
 
 ## Architecture
-<img width="269" height="330" alt="Screenshot 2026-03-05 at 14 44 55" src="https://github.com/user-attachments/assets/f2089b81-f90e-412d-81ea-0cf6a24d32d6" />
 
 [![CI](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml)
+
+<p align="center">
+  <img src="LinkNest.png" alt="Architecture Diagram" width="800"/>
+</p>
 
 A scalable multi-tenant link-in-bio platform that allows users to create customizable public profile pages and track real-time analytics through optimized, write-heavy event logging.
 
