@@ -1,0 +1,39 @@
+<% content_for :title, "Edit Profile - LinkNest" %>
+
+<div class="container-md" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Edit profile</h1>
+      <p>Update your public profile details</p>
+    </div>
+
+    <% if @user.errors.any? %>
+      <div class="error-messages">
+        <h3>Please fix the following:</h3>
+        <ul>
+          <% @user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with model: @user do |form| %>
+      <div class="form-group">
+        <%= form.label :username, "Username" %>
+        <%= form.text_field :username, required: true %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :bio, "About me" %>
+        <%= form.text_area :bio, rows: 5, placeholder: "Tell people who you are and what you do" %>
+        <div class="form-hint">This appears on your public profile</div>
+      </div>
+
+      <div class="btn-group" style="margin-top: 2rem;">
+        <%= form.submit "Save profile", class: "btn btn-primary" %>
+        <%= link_to "Cancel", dashboard_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

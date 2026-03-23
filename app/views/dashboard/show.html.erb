@@ -1,315 +1,173 @@
 <% content_for :title, "Dashboard - LinkNest" %>
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-slate-900 mb-2">
-        Dashboard
-      </h1>
-      <p class="text-slate-600">
-        Welcome back, <%= @user.first_name %>! Here's your performance overview.
-      </p>
-    </div>
+<div class="dashboard-editor">
+  <div class="dashboard-workspace-tabs" role="tablist" aria-label="Editor tabs">
+    <button type="button" class="workspace-tab is-active" data-tab="profile" role="tab" aria-selected="true">👤 Profile</button>
+    <button type="button" class="workspace-tab" data-tab="links" role="tab" aria-selected="false">🔗 Links</button>
+    <button type="button" class="workspace-tab" data-tab="share" role="tab" aria-selected="false">📤 Share</button>
+    <button type="button" class="workspace-tab" data-tab="preview" role="tab" aria-selected="false">🧾 Preview</button>
+  </div>
 
-    <!-- Key Metrics Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- Total Clicks -->
-      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-slate-600 mb-1">Total Clicks</p>
-            <p class="text-3xl font-bold text-slate-900"><%= @analytics[:total_clicks] %></p>
-          </div>
-          <div class="text-4xl">🔗</div>
+  <div class="dashboard-editor-shell container-md">
+    <section class="workspace-panel is-active" data-panel="profile">
+      <div class="dashboard-profile-header">
+        <div class="dashboard-profile-avatar" style="background-color: <%= @user.profile_color.presence || '#0ea5e9' %>;">
+          <% if @user.avatar_url.present? %>
+            <%= image_tag @user.avatar_url, alt: "#{@user.first_name} #{@user.last_name}", class: "dashboard-profile-image" %>
+          <% else %>
+            <%= "#{@user.first_name} #{@user.last_name}".split.map(&:first).join.upcase %>
+          <% end %>
         </div>
+
+        <h1 class="dashboard-profile-name"><%= @user.username %></h1>
+        <p class="dashboard-profile-url"><%= link_to "#{request.base_url}#{user_profile_path(@user.slug)}", user_profile_path(@user.slug) %></p>
       </div>
 
-      <!-- Total Visitors -->
-      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-slate-600 mb-1">Unique Visitors</p>
-            <p class="text-3xl font-bold text-slate-900"><%= @analytics[:total_unique_visitors] %></p>
-          </div>
-          <div class="text-4xl">👥</div>
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>General info</h2>
+          <%= link_to "✎", edit_user_path(@user), class: "dashboard-icon-action", aria: { label: "Edit profile" } %>
+        </header>
+
+        <div class="dashboard-card-section">
+          <p class="dashboard-label">Profile name</p>
+          <p class="dashboard-value"><%= @user.username %></p>
         </div>
-      </div>
 
-      <!-- Last 24h Clicks -->
-      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-slate-600 mb-1">Last 24 Hours</p>
-            <p class="text-3xl font-bold text-slate-900"><%= @analytics[:clicks_24h] %></p>
-            <p class="text-xs text-slate-500 mt-1"><%= @analytics[:unique_24h] %> unique visitors</p>
-          </div>
-          <div class="text-4xl">📊</div>
+        <div class="dashboard-card-section">
+          <p class="dashboard-label">About me</p>
+          <% if @user.bio.present? %>
+            <p class="dashboard-value"><%= @user.bio %></p>
+          <% else %>
+            <p class="dashboard-value dashboard-muted">No about me yet</p>
+          <% end %>
         </div>
-      </div>
 
-      <!-- Last 7d Clicks -->
-      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-orange-500">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-slate-600 mb-1">Last 7 Days</p>
-            <p class="text-3xl font-bold text-slate-900"><%= @analytics[:clicks_7d] %></p>
-            <p class="text-xs text-slate-500 mt-1"><%= @analytics[:unique_7d] %> unique visitors</p>
-          </div>
-          <div class="text-4xl">📈</div>
+        <p class="dashboard-status">● Profile is enabled</p>
+      </article>
+
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Alias</h2>
+          <%= link_to "↗", user_profile_path(@user.slug), class: "dashboard-icon-action", aria: { label: "Open public profile" } %>
+        </header>
+
+        <p class="dashboard-alias"><%= link_to "@#{@user.slug}", user_profile_path(@user.slug) %></p>
+      </article>
+    </section>
+
+    <section class="workspace-panel" data-panel="links" hidden>
+      <div class="dashboard-links-header">
+        <h2>Network</h2>
+        <div class="dashboard-links-cta-group">
+          <%= link_to "Add link", new_link_path(mode: "link"), class: "btn btn-secondary btn-sm" %>
+          <%= link_to "Add file", new_link_path(mode: "file"), class: "btn btn-primary btn-sm" %>
         </div>
-      </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      
-      <!-- Daily Trend Chart -->
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">Daily Trend (Last 7 Days)</h2>
-        <% if @analytics[:daily_data].any? %>
-          <div class="chart-container">
-            <canvas id="dailyChart" data-labels="<%= @analytics[:daily_data].map { |d| d[:date] }.to_json %>" 
-                    data-clicks="<%= @analytics[:daily_data].map { |d| d[:clicks] }.to_json %>"></canvas>
-          </div>
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              const ctx = document.getElementById('dailyChart').getContext('2d');
-              const labels = JSON.parse(document.getElementById('dailyChart').dataset.labels);
-              const data = JSON.parse(document.getElementById('dailyChart').dataset.clicks);
-              
-              new Chart(ctx, {
-                type: 'line',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    label: 'Clicks',
-                    data: data,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#3b82f6',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: true,
-                  plugins: {
-                    legend: { display: false }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      grid: { color: 'rgba(0,0,0,0.1)' }
-                    },
-                    x: {
-                      grid: { display: false }
-                    }
-                  }
-                }
-              });
-            });
-          </script>
-        <% else %>
-          <div class="text-center py-8 text-slate-500">
-            <p>📊 No data yet. Share your profile to start tracking clicks!</p>
-          </div>
-        <% end %>
-      </div>
-
-      <!-- Hourly Trend Chart -->
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">Hourly Trend (Last 24 Hours)</h2>
-        <% if @analytics[:hourly_data].any? %>
-          <div class="chart-container">
-            <canvas id="hourlyChart" data-labels="<%= @analytics[:hourly_data].map { |d| d[:time] }.to_json %>" 
-                    data-clicks="<%= @analytics[:hourly_data].map { |d| d[:clicks] }.to_json %>"></canvas>
-          </div>
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              const ctx = document.getElementById('hourlyChart').getContext('2d');
-              const labels = JSON.parse(document.getElementById('hourlyChart').dataset.labels);
-              const data = JSON.parse(document.getElementById('hourlyChart').dataset.clicks);
-              
-              new Chart(ctx, {
-                type: 'bar',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    label: 'Clicks',
-                    data: data,
-                    backgroundColor: '#8b5cf6',
-                    borderColor: '#7c3aed',
-                    borderWidth: 1,
-                    borderRadius: 4
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: true,
-                  plugins: {
-                    legend: { display: false }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      grid: { color: 'rgba(0,0,0,0.1)' }
-                    },
-                    x: {
-                      grid: { display: false }
-                    }
-                  }
-                }
-              });
-            });
-          </script>
-        <% else %>
-          <div class="text-center py-8 text-slate-500">
-            <p>⏰ No data yet. Share your profile to start tracking clicks!</p>
-          </div>
-        <% end %>
-      </div>
-
-    </div>
-
-    <!-- Top Links Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-      
-      <!-- Top 5 Links -->
-      <div class="lg:col-span-1 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">🏆 Top Links</h2>
-        <% if @analytics[:top_links].any? %>
-          <ul class="space-y-3">
-            <% @analytics[:top_links].each_with_index do |link, index| %>
-              <li class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-lg font-bold text-blue-500">#<%= index + 1 %></span>
-                    <span class="text-sm font-medium text-slate-900 truncate"><%= link.title %></span>
-                  </div>
-                </div>
-                <span class="text-lg font-bold text-slate-900"><%= link.click_count %></span>
-              </li>
-            <% end %>
-          </ul>
-        <% else %>
-          <div class="text-center py-8 text-slate-500">
-            <p>🎯 No clicks yet</p>
-          </div>
-        <% end %>
-      </div>
-
-      <!-- Browser Breakdown -->
-      <div class="lg:col-span-1 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">🌐 Browsers</h2>
-        <% if @analytics[:browsers].any? %>
-          <ul class="space-y-3">
-            <% @analytics[:browsers].each do |browser| %>
-              <li class="flex items-center justify-between">
-                <span class="text-sm text-slate-700"><%= browser.browser_name || 'Unknown' %></span>
-                <div class="flex items-center gap-2">
-                  <div class="w-24 bg-slate-200 rounded-full h-2">
-                    <div class="bg-blue-500 h-2 rounded-full" style="width: <%= (browser.click_count.to_f / @analytics[:clicks_7d].to_f * 100).round %>%"></div>
-                  </div>
-                  <span class="text-sm font-semibold text-slate-900"><%= browser.click_count %></span>
-                </div>
-              </li>
-            <% end %>
-          </ul>
-        <% else %>
-          <div class="text-center py-8 text-slate-500">
-            <p>📊 No browser data</p>
-          </div>
-        <% end %>
-      </div>
-
-      <!-- Device Type Breakdown -->
-      <div class="lg:col-span-1 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">📱 Devices</h2>
-        <% if @analytics[:device_types].any? %>
-          <ul class="space-y-3">
-            <% @analytics[:device_types].each do |device| %>
-              <li class="flex items-center justify-between">
-                <span class="text-sm text-slate-700">
-                  <% case device.device_type %>
-                    <% when 'mobile' %>
-                      📱 Mobile
-                    <% when 'tablet' %>
-                      📱 Tablet
-                    <% when 'desktop' %>
-                      💻 Desktop
-                    <% else %>
-                      🔧 <%= device.device_type || 'Unknown' %>
-                  <% end %>
-                </span>
-                <div class="flex items-center gap-2">
-                  <div class="w-24 bg-slate-200 rounded-full h-2">
-                    <div class="bg-green-500 h-2 rounded-full" style="width: <%= (device.click_count.to_f / @analytics[:clicks_7d].to_f * 100).round %>%"></div>
-                  </div>
-                  <span class="text-sm font-semibold text-slate-900"><%= device.click_count %></span>
-                </div>
-              </li>
-            <% end %>
-          </ul>
-        <% else %>
-          <div class="text-center py-8 text-slate-500">
-            <p>📊 No device data</p>
-          </div>
-        <% end %>
-      </div>
-
-    </div>
-
-    <!-- Links Management Section -->
-    <div class="bg-white rounded-lg shadow-sm p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-slate-900">🔗 My Links</h2>
-        <%= link_to "Add Link", new_link_path, class: "px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition" %>
       </div>
 
       <% if @links.any? %>
-        <div class="space-y-3">
+        <div class="dashboard-links-list">
           <% @links.each do |link| %>
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition">
-              <div class="flex-1">
-                <h3 class="font-semibold text-slate-900"><%= link.title %></h3>
-                <p class="text-sm text-slate-600 truncate"><%= link.url %></p>
-                <p class="text-xs text-slate-500 mt-1">
-                  <% click_count = link.link_clicks.count %>
-                  <%= click_count %> <%= click_count == 1 ? 'click' : 'clicks' %>
+            <% link_label =
+               if link.resume_pdf.attached?
+                 "Resume"
+               elsif link.url.to_s.start_with?("mailto:")
+                 "Email"
+               elsif link.url.to_s.start_with?("tel:")
+                 "Phone"
+               else
+                 "Url"
+               end %>
+
+            <article class="dashboard-link-card">
+              <div class="dashboard-link-content">
+                <p class="dashboard-link-title"><%= link_label %> - <%= link.title %></p>
+                <p class="dashboard-link-url">
+                  <% if link.resume_pdf.attached? %>
+                    <%= link_to link.resume_pdf.filename.to_s, rails_blob_path(link.resume_pdf, only_path: true) %>
+                  <% else %>
+                    <%= link_to link.url, link.url %>
+                  <% end %>
                 </p>
+
+                <% if link.resume_pdf.attached? %>
+                  <p class="dashboard-file-actions">
+                    <%= link_to "Preview", rails_blob_path(link.resume_pdf, only_path: true) %>
+                    <span>•</span>
+                    <%= link_to "Download", rails_blob_path(link.resume_pdf, disposition: "attachment", only_path: true), rel: "noopener noreferrer" %>
+                  </p>
+                <% end %>
               </div>
-              <div class="flex items-center gap-2">
-                <%= button_to "Delete", link_path(link), 
-                             method: :delete, 
-                             class: "px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition",
-                             form: { data: { turbo_confirm: "Delete this link?" } } %>
+
+              <div class="dashboard-link-actions">
+                <%= link_to "✎", edit_link_path(link), class: "dashboard-icon-action", aria: { label: "Edit #{link.title}" } %>
+                <%= button_to "🗑", link_path(link), method: :delete, class: "dashboard-icon-action danger", form_class: "dashboard-inline-form", form: { data: { turbo_confirm: "Delete this link?" } }, aria: { label: "Delete #{link.title}" } %>
+                <span class="dashboard-drag-hint" aria-hidden="true">⋮⋮</span>
               </div>
-            </div>
+            </article>
           <% end %>
         </div>
       <% else %>
-        <div class="text-center py-12 text-slate-500">
-          <p class="text-lg mb-2">🔗 No links yet</p>
-          <p class="text-sm">Create your first link to start sharing!</p>
-        </div>
+        <article class="dashboard-card empty">
+          <h3>No links yet</h3>
+          <p>Add your first link to start building your profile.</p>
+        </article>
       <% end %>
-    </div>
+    </section>
 
+    <section class="workspace-panel" data-panel="share" hidden>
+      <article class="dashboard-card empty">
+        <h3>Share is coming soon</h3>
+        <p>Use your public URL to share your page today.</p>
+      </article>
+    </section>
+
+    <section class="workspace-panel" data-panel="preview" hidden>
+      <article class="dashboard-card empty">
+        <h3>Preview is coming soon</h3>
+        <p>Open your live page at <%= link_to user_profile_path(@user.slug), user_profile_path(@user.slug) %>.</p>
+      </article>
+    </section>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  .chart-container {
-    position: relative;
-    height: 300px;
-    margin-bottom: 2rem;
+<script>
+  function initializeDashboardTabs() {
+    const root = document.querySelector(".dashboard-editor");
+    if (!root || root.dataset.tabsInitialized === "true") {
+      return;
+    }
+
+    const tabs = Array.from(root.querySelectorAll(".workspace-tab"));
+    const panels = Array.from(root.querySelectorAll(".workspace-panel"));
+    const tabsBar = root.querySelector(".dashboard-workspace-tabs");
+    if (!tabsBar) {
+      return;
+    }
+
+    tabsBar.addEventListener("click", function(event) {
+      const tab = event.target.closest(".workspace-tab");
+      if (!tab) {
+        return;
+      }
+
+      const panelName = tab.dataset.tab;
+
+      tabs.forEach(function(item) {
+        item.classList.toggle("is-active", item === tab);
+        item.setAttribute("aria-selected", String(item === tab));
+      });
+
+      panels.forEach(function(panel) {
+        const isTarget = panel.dataset.panel === panelName;
+        panel.classList.toggle("is-active", isTarget);
+        panel.hidden = !isTarget;
+      });
+    });
+
+    root.dataset.tabsInitialized = "true";
   }
-</style>
+
+  document.addEventListener("DOMContentLoaded", initializeDashboardTabs);
+  document.addEventListener("turbo:load", initializeDashboardTabs);
+</script>

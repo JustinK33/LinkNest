@@ -1,85 +1,89 @@
 <% content_for :title, "LinkNest - Your Links, Your Way" %>
 
-<div class="container-md" style="padding-top: 4rem; padding-bottom: 4rem;">
-  <% if authenticated? %>
-    <!-- Authenticated Home -->
-    <div style="text-align: center; margin-bottom: 3rem;">
-      <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Welcome back, <%= Current.session.user.first_name %>! 👋</h1>
-      <p style="font-size: 1.25rem; color: var(--color-gray-600); margin-bottom: 2rem;">
-        Ready to manage your links?
-      </p>
-      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        <%= link_to "Go to Dashboard", dashboard_path, class: "btn btn-primary btn-lg" %>
-        <%= link_to "View My Profile", user_profile_path(Current.session.user.slug), class: "btn btn-secondary btn-lg" %>
+<% if authenticated? %>
+  <section class="home-auth">
+    <div class="container-md home-auth-inner">
+      <p class="home-auth-kicker">Welcome back</p>
+      <h1>Everything is ready, <%= Current.session.user.first_name %>.</h1>
+      <p class="home-auth-copy">Manage your links, upload your resume, and publish updates in seconds.</p>
+      <div class="home-auth-actions">
+        <%= link_to "Open Dashboard", dashboard_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "View Public Profile", user_profile_path(Current.session.user.slug), class: "btn btn-secondary btn-lg" %>
       </div>
     </div>
-
-    <div class="card">
-      <h3 style="margin-bottom: 1rem;">Quick Stats</h3>
-      <div class="analytics-grid">
-        <div class="analytics-card">
-          <div class="analytics-value">3</div>
-          <div class="analytics-label">Total Links</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-value">89</div>
-          <div class="analytics-label">Profile Views</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-value">54</div>
-          <div class="analytics-label">Link Clicks</div>
-        </div>
-      </div>
-    </div>
-  <% else %>
-
-    <div style="text-align: center; margin-bottom: 4rem;">
-      <h1 style="font-size: 3rem; margin-bottom: 1rem; line-height: 1.1;">
-        Your Links,<br>
-        <span style="color: var(--color-primary);">Your Way</span>
-      </h1>
-      <p style="font-size: 1.25rem; color: var(--color-gray-600); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-        Create a beautiful landing page for all your links. Share your portfolio, social media, and more in one place.
-      </p>
-      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        <%= link_to "Get Started Free", new_user_path, class: "btn btn-primary btn-lg" %>
+  </section>
+<% else %>
+  <section class="landing-hero">
+    <div class="container-md landing-hero-inner">
+      <div class="landing-mark">LN</div>
+      <h1>One page for every important link.</h1>
+      <p>Build your profile, add links and resume files, then share one clean URL everywhere you show up online.</p>
+      <div class="landing-hero-actions">
+        <%= link_to "Create Account", new_user_path, class: "btn btn-primary btn-lg" %>
         <%= link_to "Sign In", new_session_path, class: "btn btn-secondary btn-lg" %>
       </div>
     </div>
+  </section>
 
-    <!-- Features Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🔗</div>
-        <h3>Unlimited Links</h3>
-        <p style="color: var(--color-gray-600);">
-          Add as many links as you want. No limits, no restrictions.
-        </p>
+  <section class="landing-feature-band">
+    <div class="container landing-feature-grid">
+      <div class="landing-phone-mock" aria-hidden="true">
+        <div class="phone-top-dot"></div>
+        <p class="phone-title">LinkNest</p>
+        <ul>
+          <li>Portfolio</li>
+          <li>Email</li>
+          <li>LinkedIn</li>
+          <li>Resume PDF</li>
+          <li>GitHub</li>
+        </ul>
       </div>
 
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
-        <h3>Track Analytics</h3>
-        <p style="color: var(--color-gray-600);">
-          See how many people view your profile and click your links.
-        </p>
-      </div>
-
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
-        <h3>Customize Your Page</h3>
-        <p style="color: var(--color-gray-600);">
-          Make it yours with a custom bio, avatar, and link order.
-        </p>
+      <div class="landing-feature-copy">
+        <h2>Launch a professional link page without friction.</h2>
+        <div class="landing-feature-list">
+          <article>
+            <h3>Unique profile URL</h3>
+            <p>Get a personalized address you can place on resumes, bios, and signatures.</p>
+          </article>
+          <article>
+            <h3>Links and resume files</h3>
+            <p>Add standard URLs or upload your resume as a direct PDF item.</p>
+          </article>
+          <article>
+            <h3>Fast editing workflow</h3>
+            <p>Update your content in one dashboard built for quick changes.</p>
+          </article>
+          <article>
+            <h3>Simple sharing</h3>
+            <p>Send one link and let visitors open everything from one place.</p>
+          </article>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="card" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); border: none; color: white; text-align: center; padding: 3rem;">
-      <h2 style="color: white; margin-bottom: 1rem;">Ready to get started?</h2>
-      <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.125rem; margin-bottom: 2rem;">
-        Join thousands of creators sharing their links with LinkNest
-      </p>
-      <%= link_to "Create Your Free Account", new_user_path, class: "btn btn-lg", style: "background-color: white; color: var(--color-primary);" %>
+  <section class="landing-cta-slice">
+    <div class="container landing-cta-grid">
+      <div class="landing-cta-copy">
+        <h2>Create and share your digital profile card.</h2>
+        <p>Set up your personal link page in minutes. Keep your key links and resume in sync as your work evolves.</p>
+        <%= link_to "Start Free", new_user_path, class: "btn btn-primary btn-lg" %>
+      </div>
+
+      <div class="landing-card-stack" aria-hidden="true">
+        <div class="profile-card-back"></div>
+        <div class="profile-card-front">
+          <div class="card-avatar">JD</div>
+          <p class="card-name">Your Profile</p>
+          <p class="card-role">Designer, Developer, Creator</p>
+          <div class="card-mini-actions">
+            <span>Call</span>
+            <span>Email</span>
+            <span>Resume</span>
+          </div>
+        </div>
+      </div>
     </div>
-  <% end %>
-</div>
+  </section>
+<% end %>

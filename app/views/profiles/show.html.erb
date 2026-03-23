@@ -19,13 +19,14 @@
         <div class="profile-username">
           @<%= @user.slug %>
         </div>
+        <h3 style="margin-bottom: 0.5rem;">About me</h3>
         <% if @user.bio.present? %>
           <div class="profile-bio">
             <%= simple_format(@user.bio) %>
           </div>
         <% else %>
           <div class="profile-bio" style="color: var(--color-gray-400); font-style: italic;">
-            This user hasn't added a bio yet.
+            This user hasn't added an About me yet.
           </div>
         <% end %>
       </div>
@@ -38,7 +39,7 @@
       <ul class="public-links-list">
         <% @links.each do |link| %>
           <li>
-            <%= link_to link.url, class: "public-link-card", target: "_blank", rel: "noopener noreferrer", data: { action: "click->profile#trackClick", link_id: link.id } do %>
+            <%= link_to link.url, class: "public-link-card", data: { action: "click->profile#trackClick", link_id: link.id } do %>
               <h3 class="public-link-title">
                 <%= link.title %>
               </h3>

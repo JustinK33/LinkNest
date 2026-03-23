@@ -1,33 +1,74 @@
+<% if @link.errors.any? %>
+  <div class="error-messages">
+    <h3>Please fix the following:</h3>
+    <ul>
+      <% @link.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<% mode = @entry_mode.presence_in(["link", "file"]) || "link" %>
+
+<div class="form-group">
+  <label>What do you want to add?</label>
+  <div class="entry-mode-actions">
+    <% mode_link_path = @link.persisted? ? edit_link_path(@link, mode: "link") : new_link_path(mode: "link") %>
+    <% mode_file_path = @link.persisted? ? edit_link_path(@link, mode: "file") : new_link_path(mode: "file") %>
+    <%= link_to "Add link", mode_link_path, class: "btn btn-sm #{mode == 'link' ? 'btn-primary' : 'btn-secondary'}" %>
+    <%= link_to "Add file", mode_file_path, class: "btn btn-sm #{mode == 'file' ? 'btn-primary' : 'btn-secondary'}" %>
+  </div>
+  <div class="form-hint">No combined mode. Choose one type for this item.</div>
+</div>
+
+<%= hidden_field_tag :entry_mode, mode %>
+
 <div class="form-group">
   <%= form.label :title, "Link title" %>
-  <%= form.text_field :title, 
-                      required: true, 
-                      placeholder: "My Portfolio",
-                      value: @link[:title] %>
+  <%= form.text_field :title,
+                      required: true,
+                      placeholder: "My Portfolio" %>
   <div class="form-hint">Give your link a descriptive name</div>
 </div>
 
-<div class="form-group">
-  <%= form.label :url, "URL" %>
-  <%= form.url_field :url, 
-                     required: true, 
-                     placeholder: "https://example.com",
-                     value: @link[:url] %>
-  <div class="form-hint">The destination URL (must include https://)</div>
-</div>
-
-<div class="form-group">
-  <%= form.label :visible, "Visibility" %>
-  <div style="display: flex; align-items: center; gap: 0.5rem;">
-    <%= form.check_box :visible, 
-                       checked: @link[:visible],
-                       style: "width: auto; margin: 0;" %>
-    <span style="color: var(--color-gray-600);">Show this link on my public profile</span>
+<% if mode == "link" %>
+  <div class="form-group" id="url_field_group">
+    <%= form.label :url, "URL" %>
+    <%= form.url_field :url,
+                       required: true,
+                       placeholder: "https://example.com" %>
+    <div class="form-hint">Use this for websites, social links, email, or phone links</div>
   </div>
-  <div class="form-hint">Hidden links are only visible to you in the dashboard</div>
-</div>
+<% end %>
+
+<% if mode == "file" %>
+  <div class="form-group" id="file_field_group">
+    <%= form.label :resume_pdf, "PDF file" %>
+    <%= form.file_field :resume_pdf, accept: "application/pdf" %>
+    <div class="form-hint">Only PDF files are accepted</div>
+
+    <% if @link.resume_pdf.attached? %>
+      <div class="mt-2" style="color: var(--color-gray-700);">
+        Current file:
+        <%= link_to @link.resume_pdf.filename.to_s, rails_blob_path(@link.resume_pdf, only_path: true) %>
+      </div>
+
+      <div class="mt-2" style="display: flex; align-items: center; gap: 0.5rem;">
+        <%= link_to "Preview", rails_blob_path(@link.resume_pdf, only_path: true) %>
+        <span style="color: var(--color-gray-400);">•</span>
+        <%= link_to "Download", rails_blob_path(@link.resume_pdf, disposition: "attachment", only_path: true), rel: "noopener noreferrer" %>
+      </div>
+
+      <div class="mt-2" style="display: flex; align-items: center; gap: 0.5rem;">
+        <%= form.check_box :remove_resume_pdf, { style: "width: auto; margin: 0;" }, "1", "0" %>
+        <span style="color: var(--color-gray-600);">Remove current PDF</span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
 
 <div class="btn-group" style="margin-top: 2rem;">
-  <%= form.submit "Save link", class: "btn btn-primary" %>
+  <%= form.submit(mode == "file" ? "Save file" : "Save link", class: "btn btn-primary") %>
   <%= link_to "Cancel", dashboard_path, class: "btn btn-secondary" %>
 </div>
