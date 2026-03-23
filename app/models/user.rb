@@ -12,7 +12,7 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :slug, with: ->(s) { s.to_s.parameterize }
 
-  validates :username, presence: true
+  validates :username, presence: true, uniqueness: { case_sensitive: false }
   validates :first_name, presence: true
   validates :last_name, presence: true
   validates :email_address, presence: true, uniqueness: { case_sensitive: false }
@@ -24,6 +24,7 @@ class User < ApplicationRecord
     with: PASSWORD_FORMAT,
     message: "must be at least 8 characters and include 1 number and 1 special character"
   }, if: :password_present?
+  validate :slug_available_for_username, on: :create
 
   before_validation :generate_slug, on: :create
 
@@ -37,16 +38,19 @@ class User < ApplicationRecord
     end
 
     def generate_slug
-      return if slug.present?
+      return if slug.present? || username.blank?
 
-      base = username.parameterize
-      self.slug = base
-      counter = 1
+      self.slug = username.to_s.parameterize
+    end
 
-      # Ensure slug is unique
-      while User.exists?(slug: self.slug)
-        self.slug = "#{base}-#{counter}"
-        counter += 1
-      end
+    def slug_available_for_username
+      return if username.blank?
+
+      candidate_slug = username.to_s.parameterize
+      return if candidate_slug.blank?
+      return unless User.exists?(slug: candidate_slug)
+
+      errors.add(:username, "is already taken")
+      errors.add(:slug, "has already been taken")
     end
 end

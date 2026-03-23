@@ -1,6 +1,6 @@
 <% content_for :title, "Sign in - LinkNest" %>
 
-<div class="container-sm" style="padding-top: 2rem; padding-bottom: 4rem;">
+<div class="container-sm auth-shell">
   <div class="form-container">
     <div class="form-header">
       <h1>Welcome back</h1>
@@ -30,11 +30,11 @@
       <%= form.submit "Sign in", class: "btn btn-primary btn-block btn-lg" %>
     <% end %>
 
-    <p style="text-align: center; margin-top: 1.5rem;">
+    <p class="auth-footer auth-footer-top">
       <%= link_to "Forgot password?", new_password_path %>
     </p>
 
-    <p style="text-align: center; margin-top: 0.5rem; color: var(--color-gray-600);">
+    <p class="auth-footer auth-footer-muted">
       Don't have an account? 
       <%= link_to "Create one", new_user_path %>
     </p>

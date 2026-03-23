@@ -66,7 +66,7 @@
       </div>
 
       <% if @links.any? %>
-        <div class="dashboard-links-list">
+        <div class="dashboard-links-list" data-reorder-url="<%= reorder_links_path %>">
           <% @links.each do |link| %>
             <% link_label =
                if link.resume_pdf.attached?
@@ -79,7 +79,7 @@
                  "Url"
                end %>
 
-            <article class="dashboard-link-card">
+            <article class="dashboard-link-card" draggable="true" data-link-id="<%= link.id %>">
               <div class="dashboard-link-content">
                 <p class="dashboard-link-title"><%= link_label %> - <%= link.title %></p>
                 <p class="dashboard-link-url">
@@ -170,4 +170,64 @@
 
   document.addEventListener("DOMContentLoaded", initializeDashboardTabs);
   document.addEventListener("turbo:load", initializeDashboardTabs);
+
+  function initializeLinkReorder() {
+    const list = document.querySelector(".dashboard-links-list");
+    if (!list || list.dataset.reorderInitialized === "true") {
+      return;
+    }
+
+    const reorderUrl = list.dataset.reorderUrl;
+    const csrf = document.querySelector("meta[name='csrf-token']")?.content;
+    let draggedCard = null;
+
+    function persistOrder() {
+      if (!reorderUrl || !csrf) {
+        return;
+      }
+
+      const orderedIds = Array.from(list.querySelectorAll(".dashboard-link-card")).map(function(card) {
+        return Number(card.dataset.linkId);
+      });
+
+      fetch(reorderUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ ordered_ids: orderedIds })
+      });
+    }
+
+    list.querySelectorAll(".dashboard-link-card").forEach(function(card) {
+      card.addEventListener("dragstart", function() {
+        draggedCard = card;
+        card.classList.add("is-dragging");
+      });
+
+      card.addEventListener("dragend", function() {
+        card.classList.remove("is-dragging");
+        draggedCard = null;
+        persistOrder();
+      });
+
+      card.addEventListener("dragover", function(event) {
+        event.preventDefault();
+        if (!draggedCard || draggedCard === card) {
+          return;
+        }
+
+        const bounds = card.getBoundingClientRect();
+        const shouldInsertBefore = event.clientY < bounds.top + bounds.height / 2;
+        list.insertBefore(draggedCard, shouldInsertBefore ? card : card.nextSibling);
+      });
+    });
+
+    list.dataset.reorderInitialized = "true";
+  }
+
+  document.addEventListener("DOMContentLoaded", initializeLinkReorder);
+  document.addEventListener("turbo:load", initializeLinkReorder);
 </script>

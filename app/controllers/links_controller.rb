@@ -44,6 +44,28 @@ class LinksController < ApplicationController
     redirect_to dashboard_path, notice: "Link deleted successfully!"
   end
 
+  def reorder
+    ordered_ids = Array(params[:ordered_ids]).map(&:to_i).uniq
+    user_links = Current.session.user.links
+
+    if ordered_ids.empty?
+      return render json: { error: "No link order provided" }, status: :unprocessable_entity
+    end
+
+    owned_ids = user_links.where(id: ordered_ids).pluck(:id)
+    if owned_ids.sort != ordered_ids.sort
+      return render json: { error: "Invalid links in reorder request" }, status: :unprocessable_entity
+    end
+
+    Link.transaction do
+      ordered_ids.each_with_index do |link_id, index|
+        user_links.where(id: link_id).update_all(position: index)
+      end
+    end
+
+    head :ok
+  end
+
   private
 
     def set_link

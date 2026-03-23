@@ -25,7 +25,8 @@
     <nav class="navbar">
       <div class="navbar-container">
         <%= link_to root_path, class: "navbar-brand" do %>
-          🔗 LinkNest
+          <span class="navbar-brand-mark">LN</span>
+          <span class="navbar-brand-text">LinkNest</span>
         <% end %>
         
         <div class="navbar-links">
@@ -34,7 +35,7 @@
             <%= link_to "Profile", user_profile_path(Current.session.user.slug) %>
             <%= button_to "Log out", session_path, method: :delete, class: "btn btn-sm btn-secondary" %>
           <% else %>
-            <%= link_to "Sign in", new_session_path %>
+            <%= link_to "Sign in", new_session_path, class: "btn btn-sm btn-secondary" %>
             <%= link_to "Register", new_user_path, class: "btn btn-sm btn-primary" %>
           <% end %>
         </div>

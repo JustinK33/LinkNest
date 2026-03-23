@@ -9,10 +9,15 @@ class UsersController < ApplicationController
   def create
     @user = User.new(user_params)
 
-    if @user.save
-      start_new_session_for(@user)
-      redirect_to root_path, notice: "Welcome to LinkNest!"
-    else
+    begin
+      if @user.save
+        start_new_session_for(@user)
+        redirect_to root_path, notice: "Welcome to LinkNest!"
+      else
+        render :new, status: :unprocessable_entity
+      end
+    rescue ActiveRecord::RecordNotUnique
+      @user.errors.add(:base, "That username, slug, or email is already in use")
       render :new, status: :unprocessable_entity
     end
   end

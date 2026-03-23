@@ -15,7 +15,9 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#show", as: :dashboard
 
   # Links CRUD + Click tracking
-  resources :links
+  resources :links do
+    patch :reorder, on: :collection
+  end
   post "/links/:id/track_click", to: "links_tracking#track_click", as: :track_click_link
 
   # Public profiles - slug-based routing with constraint (must be last to not override other routes)
