@@ -23,7 +23,11 @@ class AddDatabaseConstraintsAndIndexes < ActiveRecord::Migration[8.1]
     end
 
     # Add missing foreign key constraint for top_link_id
-    # This requires handling NULL values first
+    # First, ensure column type matches links.id (bigint) - MySQL requires exact type match for FKs
+    if column_exists?(:daily_user_stats, :top_link_id)
+      change_column :daily_user_stats, :top_link_id, :bigint
+    end
+
     unless foreign_key_exists?(:daily_user_stats, :links, column: :top_link_id)
       add_foreign_key :daily_user_stats, :links, column: :top_link_id, on_delete: :nullify
     end
