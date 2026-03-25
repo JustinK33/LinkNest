@@ -46,8 +46,8 @@ class UsersController < ApplicationController
       allowed_params = [ :username, :bio, :avatar ]
 
       # Only include contact fields if columns exist
-      allowed_params << :email if User.column_names.include?('email')
-      allowed_params << :phone_number if User.column_names.include?('phone_number')
+      allowed_params << :email if User.column_names.include?("email")
+      allowed_params << :phone_number if User.column_names.include?("phone_number")
 
       params.expect(user: allowed_params)
     end

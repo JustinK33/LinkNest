@@ -10,8 +10,8 @@ class DashboardController < ApplicationController
       @qr_png = qr_code.as_png(
         resize_gte_to: false,
         resize_exactly_to: 300,
-        fill: 'white',
-        color: 'black',
+        fill: "white",
+        color: "black",
         border_modules: 2
       )
     rescue RQRCode::QRCodeRunTimeError => e

@@ -27,7 +27,7 @@ class User < ApplicationRecord
     with: PASSWORD_FORMAT,
     message: "must be at least 8 characters and include 1 number and 1 special character"
   }, if: :password_present?
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true, if: -> { self.class.column_names.include?('email') }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true, if: -> { self.class.column_names.include?("email") }
   validates :profile_color, format: {
     with: /\A(#[0-9A-Fa-f]{3,6}|hsl\(\d{1,3},\s*\d{1,3}%,\s*\d{1,3}%\)|rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\))\z/,
     message: "must be a valid CSS color (hex, hsl, or rgb)"
@@ -45,7 +45,7 @@ class User < ApplicationRecord
 
   # Safe method to access email (handles missing column)
   def email
-    if self.class.column_names.include?('email')
+    if self.class.column_names.include?("email")
       read_attribute(:email)
     else
       nil
@@ -54,7 +54,7 @@ class User < ApplicationRecord
 
   # Safe method to access phone_number (handles missing column)
   def phone_number
-    if self.class.column_names.include?('phone_number')
+    if self.class.column_names.include?("phone_number")
       read_attribute(:phone_number)
     else
       nil
@@ -63,14 +63,14 @@ class User < ApplicationRecord
 
   # Safe method to set email (handles missing column)
   def email=(value)
-    if self.class.column_names.include?('email')
+    if self.class.column_names.include?("email")
       write_attribute(:email, value)
     end
   end
 
   # Safe method to set phone_number (handles missing column)
   def phone_number=(value)
-    if self.class.column_names.include?('phone_number')
+    if self.class.column_names.include?("phone_number")
       write_attribute(:phone_number, value)
     end
   end
@@ -117,7 +117,7 @@ class User < ApplicationRecord
       return unless avatar.attached?
 
       # Content type validation (basic check)
-      allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/webp"]
+      allowed_types = [ "image/png", "image/jpeg", "image/jpg", "image/webp" ]
       unless avatar.content_type.in?(allowed_types)
         errors.add(:avatar, "must be a PNG, JPG, or WEBP image")
         return
@@ -133,13 +133,13 @@ class User < ApplicationRecord
       avatar.blob.open do |file|
         header = file.read(8)
         valid_image = case avatar.content_type
-          when "image/png"
+        when "image/png"
             header[0..7] == "\x89PNG\r\n\x1A\n"
-          when "image/jpeg", "image/jpg"
+        when "image/jpeg", "image/jpg"
             header[0..1] == "\xFF\xD8"
-          when "image/webp"
+        when "image/webp"
             header[0..3] == "RIFF" && file.read(4) == "WEBP"
-          else
+        else
             false
         end
 

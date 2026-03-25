@@ -1,6 +1,6 @@
 class ProfilesController < ApplicationController
   allow_unauthenticated_access
-  before_action :set_user, only: [:show, :qr_code]
+  before_action :set_user, only: [ :show, :qr_code ]
 
   def show
     # Use safe scope that handles missing public column and eager load attachments
@@ -16,14 +16,14 @@ class ProfilesController < ApplicationController
       png = qr_code.as_png(
         resize_gte_to: false,
         resize_exactly_to: 400,
-        fill: 'white',
-        color: 'black',
+        fill: "white",
+        color: "black",
         border_modules: 4
       )
 
       send_data png.to_s,
-                type: 'image/png',
-                disposition: 'inline',
+                type: "image/png",
+                disposition: "inline",
                 filename: "#{@user.slug}_qr_code.png"
     rescue RQRCode::QRCodeRunTimeError => e
       Rails.logger.error "QR Code generation failed for user #{@user.slug}: #{e.message}"

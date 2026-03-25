@@ -1,6 +1,9 @@
 module SessionTestHelper
   def sign_in_as(user)
-    Current.session = user.sessions.create!
+    Current.session = user.sessions.create!(
+      ip_address: "127.0.0.1",
+      user_agent: "Rails Integration Test"
+    )
 
     ActionDispatch::TestRequest.create.cookie_jar.tap do |cookie_jar|
       cookie_jar.signed[:session_id] = Current.session.id
