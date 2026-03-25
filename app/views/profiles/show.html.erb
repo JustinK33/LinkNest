@@ -32,17 +32,17 @@
           </div>
         <% end %>
 
-        <% if @user.email.present? || @user.phone_number.present? %>
+        <% if (User.column_names.include?('email') && @user.email.present?) || (User.column_names.include?('phone_number') && @user.phone_number.present?) %>
           <div style="margin-top: 1.5rem;">
             <h4 style="margin-bottom: 0.75rem; color: var(--color-gray-700); font-size: 0.95rem;">Contact</h4>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-              <% if @user.email.present? %>
+              <% if User.column_names.include?('email') && @user.email.present? %>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                   <span style="color: var(--color-gray-600); font-size: 0.9rem;">📧</span>
                   <%= mail_to @user.email, @user.email, style: "color: var(--color-primary); text-decoration: none;" %>
                 </div>
               <% end %>
-              <% if @user.phone_number.present? %>
+              <% if User.column_names.include?('phone_number') && @user.phone_number.present? %>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                   <span style="color: var(--color-gray-600); font-size: 0.9rem;">📞</span>
                   <%= link_to @user.phone_number, "tel:#{@user.phone_number}", style: "color: var(--color-primary); text-decoration: none;" %>

@@ -27,7 +27,7 @@ class User < ApplicationRecord
     with: PASSWORD_FORMAT,
     message: "must be at least 8 characters and include 1 number and 1 special character"
   }, if: :password_present?
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true, if: -> { self.class.column_names.include?('email') }
   validate :avatar_is_valid_image
   validate :slug_available_for_username, on: :create
 
@@ -36,6 +36,38 @@ class User < ApplicationRecord
 
   def to_param
     slug
+  end
+
+  # Safe method to access email (handles missing column)
+  def email
+    if self.class.column_names.include?('email')
+      read_attribute(:email)
+    else
+      nil
+    end
+  end
+
+  # Safe method to access phone_number (handles missing column)
+  def phone_number
+    if self.class.column_names.include?('phone_number')
+      read_attribute(:phone_number)
+    else
+      nil
+    end
+  end
+
+  # Safe method to set email (handles missing column)
+  def email=(value)
+    if self.class.column_names.include?('email')
+      write_attribute(:email, value)
+    end
+  end
+
+  # Safe method to set phone_number (handles missing column)
+  def phone_number=(value)
+    if self.class.column_names.include?('phone_number')
+      write_attribute(:phone_number, value)
+    end
   end
 
   private

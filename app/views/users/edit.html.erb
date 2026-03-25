@@ -45,17 +45,56 @@
         <div class="form-hint">This appears on your public profile</div>
       </div>
 
-      <div class="form-group">
-        <%= form.label :email, "Email" %>
-        <%= form.email_field :email, placeholder: "your@email.com" %>
-        <div class="form-hint">Optional. Will be displayed on your public profile</div>
-      </div>
+      <% if User.column_names.include?('email') || User.column_names.include?('phone_number') %>
+        <div class="contact-fields-section" style="margin-top: 2rem;">
+          <h3 style="margin-bottom: 0.5rem; color: var(--color-gray-800); font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">💼</span>
+            Contact Information
+          </h3>
+          <p style="margin-bottom: 1.5rem; color: var(--color-gray-600); font-size: 0.9rem; line-height: 1.4;">
+            Add contact details that will be displayed on your public profile. These are completely optional.
+          </p>
 
-      <div class="form-group">
-        <%= form.label :phone_number, "Phone number" %>
-        <%= form.telephone_field :phone_number, placeholder: "+1 (555) 123-4567" %>
-        <div class="form-hint">Optional. Will be displayed on your public profile</div>
-      </div>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+            <% if User.column_names.include?('email') %>
+              <div class="contact-field-input">
+                <label for="user_email" class="contact-field-label">
+                  <span class="contact-field-icon">📧</span>
+                  Email Address
+                </label>
+                <%= form.email_field :email,
+                                     placeholder: "your@email.com",
+                                     style: "width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; font-size: 0.95rem;" %>
+                <div class="contact-hint">
+                  Displayed publicly with a clickable mailto link
+                </div>
+              </div>
+            <% end %>
+
+            <% if User.column_names.include?('phone_number') %>
+              <div class="contact-field-input">
+                <label for="user_phone_number" class="contact-field-label">
+                  <span class="contact-field-icon">📞</span>
+                  Phone Number
+                </label>
+                <%= form.telephone_field :phone_number,
+                                         placeholder: "+1 (555) 123-4567",
+                                         style: "width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; font-size: 0.95rem;" %>
+                <div class="contact-hint">
+                  Displayed publicly with a clickable call link
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(86, 115, 140, 0.1);">
+            <p style="font-size: 0.8rem; color: var(--color-gray-500); text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <span>🔒</span>
+              Your contact information is only shown on your public profile when you choose to add it
+            </p>
+          </div>
+        </div>
+      <% end %>
 
       <div class="btn-group" style="margin-top: 2rem;">
         <%= form.submit "Save profile", class: "btn btn-primary" %>
