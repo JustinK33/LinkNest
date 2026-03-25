@@ -13,6 +13,8 @@ class Link < ApplicationRecord
 
   scope :ordered, -> { order(:position) }
   scope :active, -> { where(deleted_at: nil) }
+  scope :public_links, -> { where(public: true) }
+  scope :private_links, -> { where(public: false) }
 
   # Update click count from aggregated stats
   def update_click_count!

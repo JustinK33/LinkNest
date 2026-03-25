@@ -5,13 +5,12 @@
     <button type="button" class="workspace-tab is-active" data-tab="profile" role="tab" aria-selected="true">👤 Profile</button>
     <button type="button" class="workspace-tab" data-tab="links" role="tab" aria-selected="false">🔗 Links</button>
     <button type="button" class="workspace-tab" data-tab="share" role="tab" aria-selected="false">📤 Share</button>
-    <button type="button" class="workspace-tab" data-tab="preview" role="tab" aria-selected="false">🧾 Preview</button>
   </div>
 
   <div class="dashboard-editor-shell container-md">
     <section class="workspace-panel is-active" data-panel="profile">
       <div class="dashboard-profile-header">
-        <div class="dashboard-profile-avatar" style="background-color: <%= @user.profile_color.presence || '#0ea5e9' %>;">
+        <div class="dashboard-profile-avatar" style="background-color: <%= @user.profile_color.presence || '#56738c' %>;">
           <% if @user.avatar.attached? %>
             <%= image_tag @user.avatar, alt: "#{@user.first_name} #{@user.last_name}", class: "dashboard-profile-image" %>
           <% elsif @user.avatar_url.present? %>
@@ -83,7 +82,12 @@
 
             <article class="dashboard-link-card" draggable="true" data-link-id="<%= link.id %>">
               <div class="dashboard-link-content">
-                <p class="dashboard-link-title"><%= link_label %> - <%= link.title %></p>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <p class="dashboard-link-title"><%= link_label %> - <%= link.title %></p>
+                  <% unless link.public? %>
+                    <span style="font-size: 0.75rem; background: var(--color-gray-300); color: var(--color-gray-700); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 500;">Private</span>
+                  <% end %>
+                </div>
                 <p class="dashboard-link-url">
                   <% if link.resume_pdf.attached? %>
                     <%= link_to link.resume_pdf.filename.to_s, rails_blob_path(link.resume_pdf, only_path: true) %>
@@ -118,16 +122,48 @@
     </section>
 
     <section class="workspace-panel" data-panel="share" hidden>
-      <article class="dashboard-card empty">
-        <h3>Share is coming soon</h3>
-        <p>Use your public URL to share your page today.</p>
-      </article>
-    </section>
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Share Your Profile</h2>
+        </header>
 
-    <section class="workspace-panel" data-panel="preview" hidden>
-      <article class="dashboard-card empty">
-        <h3>Preview is coming soon</h3>
-        <p>Open your live page at <%= link_to public_profile_url(@user), public_profile_url(@user) %>.</p>
+        <div class="dashboard-card-section">
+          <p class="dashboard-label">Your Public URL</p>
+          <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem;">
+            <input type="text" value="<%= user_profile_url(@user) %>" readonly
+                   style="flex: 1; font-family: var(--font-mono); font-size: 0.9rem; background: var(--color-gray-50);"
+                   id="profileUrl">
+            <button onclick="copyProfileUrl()" class="btn btn-secondary btn-sm">📋 Copy</button>
+          </div>
+        </div>
+
+        <div class="dashboard-card-section">
+          <p class="dashboard-label">QR Code</p>
+          <div style="text-align: center;">
+            <div class="qr-code-container" style="display: inline-block; padding: 1.5rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--color-gray-100); margin-bottom: 1.5rem;">
+              <%= image_tag "data:image/png;base64,#{Base64.encode64(@qr_png.to_s)}",
+                            alt: "QR Code for your profile",
+                            style: "width: 200px; height: 200px; display: block;" %>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+              <%= link_to "📱 Download QR Code", user_qr_code_path(@user),
+                          class: "btn btn-secondary btn-sm" %>
+              <%= link_to "👀 View Public Profile", user_profile_url(@user),
+                          class: "btn btn-primary btn-sm", target: "_blank" %>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-card-section">
+          <p class="dashboard-label">Sharing Tips</p>
+          <div style="background: var(--color-gray-50); padding: 1rem; border-radius: var(--radius-md); color: var(--color-gray-700); font-size: 0.9rem;">
+            <ul style="margin: 0; padding-left: 1.2rem; line-height: 1.6;">
+              <li>Add your URL to business cards, email signatures, or social media</li>
+              <li>Use the QR code on printed materials, name tags, or presentation slides</li>
+              <li>Program NFC tags with your profile URL for instant sharing</li>
+            </ul>
+          </div>
+        </div>
       </article>
     </section>
   </div>
@@ -232,4 +268,36 @@
 
   document.addEventListener("DOMContentLoaded", initializeLinkReorder);
   document.addEventListener("turbo:load", initializeLinkReorder);
+
+  function copyProfileUrl() {
+    const urlInput = document.getElementById('profileUrl');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999); // For mobile devices
+
+    navigator.clipboard.writeText(urlInput.value).then(() => {
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '✅ Copied!';
+      button.style.background = 'var(--color-success)';
+
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = '';
+      }, 2000);
+    }).catch(err => {
+      console.error('Could not copy text: ', err);
+      // Fallback for older browsers
+      try {
+        document.execCommand('copy');
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✅ Copied!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      } catch (fallbackErr) {
+        alert('Please manually copy the URL: ' + urlInput.value);
+      }
+    });
+  }
 </script>

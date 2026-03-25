@@ -32,6 +32,16 @@
   <div class="form-hint">Give your link a descriptive name</div>
 </div>
 
+<div class="form-group">
+  <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <%= form.check_box :public, { style: "width: auto; margin: 0;" } %>
+    <label for="link_public" style="margin: 0; cursor: pointer; font-weight: 500;">
+      Show on public profile
+    </label>
+  </div>
+  <div class="form-hint">Only public links appear on your public profile</div>
+</div>
+
 <% if mode == "link" %>
   <div class="form-group" id="url_field_group">
     <%= form.label :url, "URL" %>
@@ -45,30 +55,95 @@
 <% if mode == "file" %>
   <div class="form-group" id="file_field_group">
     <%= form.label :resume_pdf, "PDF file" %>
-    <%= form.file_field :resume_pdf, accept: "application/pdf" %>
+    <div class="file-input-wrapper">
+      <%= form.file_field :resume_pdf, accept: "application/pdf", id: "file_input_#{@link.id || 'new'}" %>
+      <div class="file-input-display">
+        <span class="file-input-icon">📄</span>
+        <span class="file-input-text">Choose a PDF file or drag it here</span>
+      </div>
+    </div>
     <div class="form-hint">Only PDF files are accepted</div>
 
     <% if @link.resume_pdf.attached? %>
-      <div class="mt-2" style="color: var(--color-gray-700);">
-        Current file:
-        <%= link_to @link.resume_pdf.filename.to_s, rails_blob_path(@link.resume_pdf, only_path: true) %>
+      <div class="mt-2" style="color: var(--color-gray-700); display: flex; align-items: center; gap: 0.5rem;">
+        <span style="color: var(--color-success); font-weight: 600;">✓</span>
+        <span>Current file: <strong><%= @link.resume_pdf.filename.to_s %></strong></span>
       </div>
 
-      <div class="mt-2" style="display: flex; align-items: center; gap: 0.5rem;">
-        <%= link_to "Preview", rails_blob_path(@link.resume_pdf, only_path: true) %>
+      <div class="mt-2" style="display: flex; align-items: center; gap: 0.75rem;">
+        <%= link_to "👁 Preview", rails_blob_path(@link.resume_pdf, only_path: true), class: "link-action" %>
         <span style="color: var(--color-gray-400);">•</span>
-        <%= link_to "Download", rails_blob_path(@link.resume_pdf, disposition: "attachment", only_path: true), rel: "noopener noreferrer" %>
+        <%= link_to "⬇ Download", rails_blob_path(@link.resume_pdf, disposition: "attachment", only_path: true), rel: "noopener noreferrer", class: "link-action" %>
       </div>
 
-      <div class="mt-2" style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="mt-3" style="display: flex; align-items: center; gap: 0.5rem;">
         <%= form.check_box :remove_resume_pdf, { style: "width: auto; margin: 0;" }, "1", "0" %>
-        <span style="color: var(--color-gray-600);">Remove current PDF</span>
+        <span style="color: var(--color-gray-600);">Replace with a new PDF</span>
       </div>
     <% end %>
   </div>
+
+  <script>
+    (function() {
+      const fileInput = document.getElementById("file_input_<%= @link.id || 'new' %>");
+      const fileDisplay = document.querySelector(".file-input-display");
+
+      if (!fileInput || !fileDisplay) return;
+
+      const updateDisplay = function() {
+        if (fileInput.files && fileInput.files[0]) {
+          const filename = fileInput.files[0].name;
+          fileDisplay.innerHTML = '<span style="color: var(--color-success); font-weight: 600;">✓</span> <span class="file-input-text">' + filename + '</span>';
+        }
+      };
+
+      fileInput.addEventListener("change", updateDisplay);
+
+      // Drag and drop
+      const wrapper = fileInput.closest(".file-input-wrapper");
+      if (wrapper) {
+        ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+          wrapper.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        ["dragenter", "dragover"].forEach(eventName => {
+          wrapper.addEventListener(eventName, highlight, false);
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+          wrapper.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+          wrapper.style.borderColor = "var(--color-primary)";
+          wrapper.style.backgroundColor = "var(--color-primary-subtle)";
+        }
+
+        function unhighlight(e) {
+          wrapper.style.borderColor = "var(--color-gray-200)";
+          wrapper.style.backgroundColor = "var(--color-gray-50)";
+        }
+
+        wrapper.addEventListener("drop", handleDrop, false);
+
+        function handleDrop(e) {
+          const dt = e.dataTransfer;
+          const files = dt.files;
+          fileInput.files = files;
+          updateDisplay();
+        }
+      }
+    })();
+  </script>
 <% end %>
 
 <div class="btn-group" style="margin-top: 2rem;">
   <%= form.submit(mode == "file" ? "Save file" : "Save link", class: "btn btn-primary") %>
   <%= link_to "Cancel", dashboard_path, class: "btn btn-secondary" %>
 </div>
+

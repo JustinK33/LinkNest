@@ -73,7 +73,7 @@ class LinksController < ApplicationController
     end
 
     def link_params
-      params.expect(link: [ :title, :url, :resume_pdf ])
+      params.expect(link: [ :title, :url, :resume_pdf, :public ])
     end
 
     def requested_entry_mode(default: "link")

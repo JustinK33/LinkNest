@@ -66,3 +66,5 @@ end
 gem "dotenv", "~> 3.2"
 
 gem "mysql2", "~> 0.5.7"
+
+gem "rqrcode"

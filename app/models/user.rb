@@ -30,6 +30,7 @@ class User < ApplicationRecord
   validate :slug_available_for_username, on: :create
 
   before_validation :generate_slug, on: :create
+  before_create :generate_profile_color
 
   def to_param
     slug
@@ -48,6 +49,18 @@ class User < ApplicationRecord
       return if slug.present? || username.blank?
 
       self.slug = username.to_s.parameterize
+    end
+
+    def generate_profile_color
+      return if profile_color.present?
+
+      # Deterministic color generation based on username
+      # Ensures same user always gets the same color, but different users get different colors
+      hue = (username.sum % 360)
+      saturation = 65
+      lightness = 50
+
+      self.profile_color = "hsl(#{hue}, #{saturation}%, #{lightness}%)"
     end
 
     def slug_available_for_username

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_05_120007) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_24_232137) do
   create_table "action_text_rich_texts", charset: "utf8mb4", collation: "utf8mb4_bin", force: :cascade do |t|
     t.text "body", size: :long
     t.datetime "created_at", null: false
@@ -102,12 +102,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_05_120007) do
     t.string "icon_color", default: "#3b82f6"
     t.integer "inventory_count", default: 0
     t.integer "position", default: 0
+    t.boolean "public", default: true, null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.string "url"
     t.bigint "user_id"
     t.index ["user_id", "created_at"], name: "index_links_on_user_id_and_created_at"
     t.index ["user_id", "position"], name: "index_links_on_user_id_and_position"
+    t.index ["user_id", "public", "position"], name: "index_links_on_user_id_and_public_and_position"
     t.index ["user_id"], name: "index_links_on_user_id"
   end
 

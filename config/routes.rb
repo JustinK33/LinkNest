@@ -22,5 +22,6 @@ Rails.application.routes.draw do
 
   # Public profiles - slug-based routing with constraint (must be last to not override other routes)
   # SlugConstraint ensures: reserved words blocked, slug must exist in database
+  get "/:slug/qr", to: "profiles#qr_code", as: :user_qr_code, constraints: SlugConstraint.new
   get "/:slug", to: "profiles#show", as: :user_profile, constraints: SlugConstraint.new
 end
