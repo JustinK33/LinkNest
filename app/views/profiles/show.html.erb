@@ -4,7 +4,7 @@
   <!-- Public Profile Header -->
   <div class="card">
     <div class="profile-card">
-      <div class="profile-avatar" style="width: 120px; height: 120px; font-size: 2.5rem; background-color: <%= @user.profile_color %>; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;">
+      <div class="profile-avatar" style="width: 120px; height: 120px; font-size: 2.5rem; background-color: <%= safe_css_color(@user.profile_color) %>; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;">
         <% if @user.avatar.attached? %>
           <%= image_tag @user.avatar, alt: "#{@user.first_name} #{@user.last_name}", style: "width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" %>
         <% elsif @user.avatar_url.present? %>
@@ -24,7 +24,7 @@
         <h3 style="margin-bottom: 0.5rem;">About me</h3>
         <% if @user.bio.present? %>
           <div class="profile-bio">
-            <%= simple_format(@user.bio) %>
+            <%= simple_format(html_escape(@user.bio)) %>
           </div>
         <% else %>
           <div class="profile-bio" style="color: var(--color-gray-400); font-style: italic;">

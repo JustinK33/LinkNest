@@ -8,6 +8,8 @@ class Link < ApplicationRecord
   validate :url_or_resume_present
   validate :url_format_is_valid
   validate :resume_pdf_must_be_pdf
+  validate :resume_pdf_size_limit
+  validate :resume_pdf_content_validation
   validates :user_id, presence: true
   validates :position, presence: true, numericality: { only_integer: true }
 
@@ -71,8 +73,60 @@ class Link < ApplicationRecord
 
     def resume_pdf_must_be_pdf
       return unless resume_pdf.attached?
-      return if resume_pdf.content_type == "application/pdf"
 
-      errors.add(:resume_pdf, "must be a PDF file")
+      # Check content type (basic check)
+      unless resume_pdf.content_type == "application/pdf"
+        errors.add(:resume_pdf, "must be a PDF file")
+        return
+      end
+
+      # Server-side file content validation - check PDF magic bytes
+      resume_pdf.blob.open do |file|
+        header = file.read(4)
+        unless header == "%PDF"
+          errors.add(:resume_pdf, "file does not appear to be a valid PDF")
+          return
+        end
+      end
+    rescue => e
+      errors.add(:resume_pdf, "could not validate file content")
+    end
+
+    def resume_pdf_size_limit
+      return unless resume_pdf.attached?
+
+      # Limit PDF files to 10MB
+      max_size = 10.megabytes
+      if resume_pdf.byte_size > max_size
+        errors.add(:resume_pdf, "must be 10MB or smaller")
+      end
+    end
+
+    def resume_pdf_content_validation
+      return unless resume_pdf.attached?
+
+      # Additional security checks
+      resume_pdf.blob.open do |file|
+        content = file.read(1024) # Read first 1KB for analysis
+
+        # Check for suspicious patterns (basic malware detection)
+        suspicious_patterns = [
+          /javascript/i,
+          /<script/i,
+          /eval\(/i,
+          /onload=/i,
+          /iframe/i
+        ]
+
+        suspicious_patterns.each do |pattern|
+          if content.match?(pattern)
+            errors.add(:resume_pdf, "file contains potentially malicious content")
+            break
+          end
+        end
+      end
+    rescue => e
+      # Log error but don't fail validation to avoid DOS attacks
+      Rails.logger.warn "Error validating PDF content: #{e.message}"
     end
 end

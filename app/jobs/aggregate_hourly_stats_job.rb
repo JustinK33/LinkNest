@@ -16,8 +16,9 @@ class AggregateHourlyStatsJob < ApplicationJob
       aggregate_user_hour(user_id, one_hour_ago)
     end
 
-    # Update link click_count cache
-    update_link_click_counts
+    # Note: We no longer need to manually update link click_count
+    # because LinkClick now has counter_cache: :click_count
+    # This automatically updates Link.click_count when LinkClick records are created/destroyed
   end
 
   private
@@ -55,10 +56,21 @@ class AggregateHourlyStatsJob < ApplicationJob
   end
 
   def update_link_click_counts
-    # Update link.click_count with total from link_clicks
-    Link.find_each do |link|
-      total_clicks = link.link_clicks.count
-      link.update(click_count: total_clicks) if link.click_count != total_clicks
+    # Update link.click_count with total from link_clicks using bulk queries to avoid N+1
+    # Get all link click counts in one query
+    link_counts = LinkClick.group(:link_id).count
+
+    # Update links that have different click counts than their cached value
+    link_counts.each do |link_id, actual_count|
+      Link.where(id: link_id)
+          .where.not(click_count: actual_count)
+          .update_all(click_count: actual_count)
     end
+
+    # Also reset click_count to 0 for links that have no clicks but have a non-zero count
+    Link.left_joins(:link_clicks)
+        .where(link_clicks: { id: nil })
+        .where.not(click_count: 0)
+        .update_all(click_count: 0)
   end
 end

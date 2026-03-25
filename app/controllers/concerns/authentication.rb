@@ -30,7 +30,20 @@ module Authentication
     end
 
     def find_session_by_cookie
-      Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+      return unless cookies.signed[:session_id]
+
+      session = Session.find_by(id: cookies.signed[:session_id])
+
+      # Only return active (non-expired) sessions
+      return unless session&.active?
+
+      # Additional security: check for suspicious activity (optional - can be enabled later)
+      # if session.suspicious_activity?(request.remote_ip, request.user_agent)
+      #   session.destroy
+      #   return nil
+      # end
+
+      session
     end
 
     def request_authentication

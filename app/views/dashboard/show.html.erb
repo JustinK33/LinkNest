@@ -10,7 +10,7 @@
   <div class="dashboard-editor-shell container-md">
     <section class="workspace-panel is-active" data-panel="profile">
       <div class="dashboard-profile-header">
-        <div class="dashboard-profile-avatar" style="background-color: <%= @user.profile_color.presence || '#56738c' %>;">
+        <div class="dashboard-profile-avatar" style="background-color: <%= safe_css_color(@user.profile_color, '#56738c') %>;">
           <% if @user.avatar.attached? %>
             <%= image_tag @user.avatar, alt: "#{@user.first_name} #{@user.last_name}", class: "dashboard-profile-image" %>
           <% elsif @user.avatar_url.present? %>
@@ -38,7 +38,7 @@
         <div class="dashboard-card-section">
           <p class="dashboard-label">About me</p>
           <% if @user.bio.present? %>
-            <p class="dashboard-value"><%= @user.bio %></p>
+            <p class="dashboard-value"><%= html_escape(@user.bio) %></p>
           <% else %>
             <p class="dashboard-value dashboard-muted">No about me yet</p>
           <% end %>
@@ -140,17 +140,33 @@
         <div class="dashboard-card-section">
           <p class="dashboard-label">QR Code</p>
           <div style="text-align: center;">
-            <div class="qr-code-container" style="display: inline-block; padding: 1.5rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--color-gray-100); margin-bottom: 1.5rem;">
-              <%= image_tag "data:image/png;base64,#{Base64.encode64(@qr_png.to_s)}",
-                            alt: "QR Code for your profile",
-                            style: "width: 200px; height: 200px; display: block;" %>
-            </div>
-            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-              <%= link_to "📱 Download QR Code", user_qr_code_path(@user),
-                          class: "btn btn-secondary btn-sm" %>
-              <%= link_to "👀 View Public Profile", user_profile_url(@user),
-                          class: "btn btn-primary btn-sm", target: "_blank" %>
-            </div>
+            <% if @qr_png %>
+              <div class="qr-code-container" style="display: inline-block; padding: 1.5rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--color-gray-100); margin-bottom: 1.5rem;">
+                <%= image_tag "data:image/png;base64,#{Base64.encode64(@qr_png.to_s)}",
+                              alt: "QR Code for your profile",
+                              style: "width: 200px; height: 200px; display: block;" %>
+              </div>
+              <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <%= link_to "📱 Download QR Code", user_qr_code_path(@user),
+                            class: "btn btn-secondary btn-sm" %>
+                <%= link_to "👀 View Public Profile", user_profile_url(@user),
+                            class: "btn btn-primary btn-sm", target: "_blank" %>
+              </div>
+            <% else %>
+              <div style="padding: 2rem; background: var(--color-gray-50); border-radius: var(--radius-lg); border: 1px solid var(--color-gray-200); margin-bottom: 1.5rem;">
+                <div style="color: var(--color-gray-600); font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <p style="color: var(--color-gray-700); margin: 0;">
+                  <%= @qr_error || "QR Code unavailable" %>
+                </p>
+                <p style="color: var(--color-gray-500); font-size: 0.875rem; margin: 0.5rem 0 0 0;">
+                  You can still share your profile using the URL above.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: center;">
+                <%= link_to "👀 View Public Profile", user_profile_url(@user),
+                            class: "btn btn-primary btn-sm", target: "_blank" %>
+              </div>
+            <% end %>
           </div>
         </div>
 

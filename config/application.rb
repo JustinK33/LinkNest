@@ -23,5 +23,26 @@ module LinkNest
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Enhanced Active Storage security configuration
+    config.active_storage.variant_processor = :mini_magick
+    config.active_storage.content_types_to_serve_as_binary = %w[
+      text/html
+      text/javascript
+      application/javascript
+      text/xml
+      application/xml
+      application/xhtml+xml
+    ]
+
+    # Prevent serving potentially dangerous files as inline
+    config.active_storage.content_types_allowed_inline = %w[
+      image/png
+      image/gif
+      image/jpg
+      image/jpeg
+      image/webp
+      application/pdf
+    ]
   end
 end

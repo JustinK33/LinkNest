@@ -1,8 +1,16 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# If running any Rails command, setup databases
+if [[ "${*}" == *"./bin/rails"* ]] || [[ "${*}" == *"solid_queue"* ]]; then
+  echo "🚀 Setting up databases for Rails application..."
+
+  # Setup primary and queue databases
   ./bin/rails db:prepare
+
+  # The solid_queue:setup task is automatically called by db:prepare
+  # via the Rake task enhancement in lib/tasks/solid_queue.rake
+
+  echo "✅ Database setup completed"
 fi
 
 exec "${@}"

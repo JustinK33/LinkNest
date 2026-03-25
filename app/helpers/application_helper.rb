@@ -22,4 +22,15 @@ module ApplicationHelper
     slug = user_or_slug.respond_to?(:slug) ? user_or_slug.slug : user_or_slug
     "#{public_app_host}#{user_profile_path(slug)}"
   end
+
+  def safe_css_color(color, default = "#6366f1")
+    return default if color.blank?
+
+    # Only allow known safe CSS color patterns
+    if color.match?(/\A(#[0-9A-Fa-f]{3,6}|hsl\(\d{1,3},\s*\d{1,3}%,\s*\d{1,3}%\)|rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\))\z/)
+      color
+    else
+      default
+    end
+  end
 end

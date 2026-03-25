@@ -1,6 +1,55 @@
 #!/usr/bin/env ruby
 
-require_relative "../config/environment"
-require "solid_queue/cli"
+# Dedicated Solid Queue job processor for multi-server deployments
+# This script runs Solid Queue workers outside of the web server
 
+require_relative "../config/environment"
+
+puts "🚀 Starting Solid Queue job processor..."
+puts "📊 Environment: #{Rails.env}"
+
+# Ensure database is set up before starting workers
+begin
+  # Verify queue database connection and tables
+  ActiveRecord::Base.connected_to(role: :writing, shard: :default) do
+    unless SolidQueue::Job.connection.table_exists?('solid_queue_jobs')
+      puts "❌ Solid Queue tables not found. Running setup..."
+      system("bundle exec rails solid_queue:setup") || raise("Failed to setup Solid Queue")
+    else
+      puts "✅ Solid Queue tables verified"
+    end
+  end
+rescue => e
+  puts "❌ Database setup failed: #{e.message}"
+  puts "🔄 Retrying in 5 seconds..."
+  sleep 5
+  retry_count = (retry_count || 0) + 1
+  if retry_count < 3
+    retry
+  else
+    exit 1
+  end
+end
+
+# Load Solid Queue configuration
+queue_config_path = Rails.root.join("config", "queue.yml")
+recurring_config_path = Rails.root.join("config", "recurring.yml")
+
+if File.exist?(queue_config_path)
+  puts "📝 Queue configuration loaded from #{queue_config_path}"
+else
+  puts "⚠️  No queue.yml found, using default configuration"
+end
+
+if File.exist?(recurring_config_path)
+  puts "⏰ Recurring jobs loaded from #{recurring_config_path}"
+else
+  puts "⚠️  No recurring.yml found, no recurring jobs will be scheduled"
+end
+
+puts "💼 Job concurrency: #{ENV.fetch('JOB_CONCURRENCY', 1)}"
+puts "🎯 Starting Solid Queue CLI..."
+
+# Start Solid Queue CLI with provided arguments
+require "solid_queue/cli"
 SolidQueue::Cli.start(ARGV)

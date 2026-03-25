@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_25_051616) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_25_055646) do
   create_table "action_text_rich_texts", charset: "utf8mb4", collation: "utf8mb4_bin", force: :cascade do |t|
     t.text "body", size: :long
     t.datetime "created_at", null: false

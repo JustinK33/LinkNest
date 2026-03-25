@@ -1,6 +1,6 @@
 class LinkClick < ApplicationRecord
   belongs_to :user
-  belongs_to :link
+  belongs_to :link, counter_cache: :click_count
 
   validates :user_id, presence: true
   validates :link_id, presence: true

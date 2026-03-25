@@ -24,7 +24,21 @@ class LinksTrackingController < ApplicationController
   private
 
   def set_link
-    @link = Link.find(params[:id])
+    # Only allow tracking for public links to prevent data leakage
+    # Users can only track their own links or public links from other users
+    if current_user
+      # Authenticated users can track their own links (public or private) or any public link
+      @link = Link.where(
+        "(user_id = ? OR (public = ? OR public IS NULL))",
+        current_user.id,
+        true
+      ).find(params[:id])
+    else
+      # Unauthenticated users can only track public links
+      @link = Link.where(public: true).or(Link.where(public: nil)).find(params[:id])
+    end
+  rescue ActiveRecord::RecordNotFound
+    head :not_found
   end
 
   def device_type
