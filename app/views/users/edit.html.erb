@@ -45,6 +45,18 @@
         <div class="form-hint">This appears on your public profile</div>
       </div>
 
+      <div class="form-group">
+        <%= form.label :email, "Email" %>
+        <%= form.email_field :email, placeholder: "your@email.com" %>
+        <div class="form-hint">Optional. Will be displayed on your public profile</div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :phone_number, "Phone number" %>
+        <%= form.telephone_field :phone_number, placeholder: "+1 (555) 123-4567" %>
+        <div class="form-hint">Optional. Will be displayed on your public profile</div>
+      </div>
+
       <div class="btn-group" style="margin-top: 2rem;">
         <%= form.submit "Save profile", class: "btn btn-primary" %>
         <%= link_to "Cancel", dashboard_path, class: "btn btn-secondary" %>

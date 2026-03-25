@@ -13,13 +13,34 @@ class Link < ApplicationRecord
 
   scope :ordered, -> { order(:position) }
   scope :active, -> { where(deleted_at: nil) }
-  scope :public_links, -> { where(public: true) }
-  scope :private_links, -> { where(public: false) }
+  scope :public_links, -> {
+    if column_names.include?('public')
+      where(public: true)
+    else
+      all # Return all links if public column doesn't exist
+    end
+  }
+  scope :private_links, -> {
+    if column_names.include?('public')
+      where(public: false)
+    else
+      none # Return no links if public column doesn't exist
+    end
+  }
 
   # Update click count from aggregated stats
   def update_click_count!
     total_clicks = link_clicks.count
     update(click_count: total_clicks)
+  end
+
+  # Safe method to check if link is public (handles missing column)
+  def public?
+    if self.class.column_names.include?('public')
+      read_attribute(:public) != false # Default to true if nil
+    else
+      true # Default to public if column doesn't exist
+    end
   end
 
   # Get clicks for a time period

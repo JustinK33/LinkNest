@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_24_232137) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_25_051616) do
   create_table "action_text_rich_texts", charset: "utf8mb4", collation: "utf8mb4_bin", force: :cascade do |t|
     t.text "body", size: :long
     t.datetime "created_at", null: false
@@ -134,10 +134,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_232137) do
     t.string "avatar_url"
     t.text "bio"
     t.datetime "created_at", null: false
+    t.string "email"
     t.string "email_address", null: false
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.string "password_digest", null: false
+    t.string "phone_number"
     t.string "profile_color", default: "#3b82f6"
     t.string "slug", null: false
     t.datetime "updated_at", null: false

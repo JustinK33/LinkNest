@@ -11,6 +11,7 @@ class User < ApplicationRecord
   SLUG_FORMAT = /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/i
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :email, with: ->(e) { e.present? ? e.strip.downcase : e }
   normalizes :slug, with: ->(s) { s.to_s.parameterize }
 
   validates :username, presence: true, uniqueness: { case_sensitive: false }
@@ -26,6 +27,7 @@ class User < ApplicationRecord
     with: PASSWORD_FORMAT,
     message: "must be at least 8 characters and include 1 number and 1 special character"
   }, if: :password_present?
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validate :avatar_is_valid_image
   validate :slug_available_for_username, on: :create
 

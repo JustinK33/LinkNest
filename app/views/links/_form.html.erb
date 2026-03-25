@@ -32,6 +32,7 @@
   <div class="form-hint">Give your link a descriptive name</div>
 </div>
 
+<% if Link.column_names.include?('public') %>
 <div class="form-group">
   <div style="display: flex; align-items: center; gap: 0.75rem;">
     <%= form.check_box :public, { style: "width: auto; margin: 0;" } %>
@@ -41,6 +42,7 @@
   </div>
   <div class="form-hint">Only public links appear on your public profile</div>
 </div>
+<% end %>
 
 <% if mode == "link" %>
   <div class="form-group" id="url_field_group">

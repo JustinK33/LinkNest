@@ -3,18 +3,8 @@ class ProfilesController < ApplicationController
   before_action :set_user, only: [:show, :qr_code]
 
   def show
+    # Use safe scope that handles missing public column
     @links = @user.links.public_links.order(:position)
-
-    # Create QR code for the public profile URL
-    profile_url = user_profile_url(@user)
-    qr_code = RQRCode::QRCode.new(profile_url)
-    @qr_png = qr_code.as_png(
-      resize_gte_to: false,
-      resize_exactly_to: 300,
-      fill: 'white',
-      color: 'black',
-      border_modules: 2
-    )
   end
 
   def qr_code

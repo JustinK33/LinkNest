@@ -73,7 +73,12 @@ class LinksController < ApplicationController
     end
 
     def link_params
-      params.expect(link: [ :title, :url, :resume_pdf, :public ])
+      allowed_params = [ :title, :url, :resume_pdf ]
+
+      # Only include :public param if the column exists
+      allowed_params << :public if Link.column_names.include?('public')
+
+      params.expect(link: allowed_params)
     end
 
     def requested_entry_mode(default: "link")
