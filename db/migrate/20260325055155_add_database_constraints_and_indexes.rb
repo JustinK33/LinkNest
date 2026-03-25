@@ -11,30 +11,38 @@ class AddDatabaseConstraintsAndIndexes < ActiveRecord::Migration[8.1]
     change_column_null :sessions, :ip_address, false
     change_column_null :sessions, :user_agent, false
 
-    # Add performance indexes
+    # Add performance indexes - with safety checks to prevent duplicates
     # Index for session cleanup queries (expires sessions efficiently)
-    add_index :sessions, :updated_at, name: "index_sessions_on_updated_at"
+    unless index_exists?(:sessions, :updated_at, name: "index_sessions_on_updated_at")
+      add_index :sessions, :updated_at, name: "index_sessions_on_updated_at"
+    end
 
     # Index for public link queries (used in profiles and tracking)
-    add_index :links, :public, name: "index_links_on_public"
+    unless index_exists?(:links, :public, name: "index_links_on_public")
+      add_index :links, :public, name: "index_links_on_public"
+    end
 
     # Add missing foreign key constraint for top_link_id
     # This requires handling NULL values first
-    add_foreign_key :daily_user_stats, :links, column: :top_link_id, on_delete: :nullify
+    unless foreign_key_exists?(:daily_user_stats, :links, column: :top_link_id)
+      add_foreign_key :daily_user_stats, :links, column: :top_link_id, on_delete: :nullify
+    end
 
     # Add unique constraint for session management (one session per user agent + IP combo per user)
     # This helps prevent session duplication and improves security
     # NOTE: Commenting this out for now as it might be too restrictive
-    # add_index :sessions, [:user_id, :user_agent, :ip_address], unique: true, name: "index_sessions_on_user_security"
+    # unless index_exists?(:sessions, [:user_id, :user_agent, :ip_address], name: "index_sessions_on_user_security")
+    #   add_index :sessions, [:user_id, :user_agent, :ip_address], unique: true, name: "index_sessions_on_user_security"
+    # end
   end
 
   def down
     # Remove indexes
-    remove_index :sessions, name: "index_sessions_on_updated_at" if index_exists?(:sessions, :updated_at)
-    remove_index :links, name: "index_links_on_public" if index_exists?(:links, :public)
+    remove_index :sessions, name: "index_sessions_on_updated_at" if index_exists?(:sessions, :updated_at, name: "index_sessions_on_updated_at")
+    remove_index :links, name: "index_links_on_public" if index_exists?(:links, :public, name: "index_links_on_public")
 
     # Remove foreign key
-    remove_foreign_key :daily_user_stats, :links if foreign_key_exists?(:daily_user_stats, :links)
+    remove_foreign_key :daily_user_stats, :links, column: :top_link_id if foreign_key_exists?(:daily_user_stats, :links, column: :top_link_id)
 
     # Revert NOT NULL constraints (make nullable again)
     change_column_null :links, :user_id, true
