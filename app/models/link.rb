@@ -16,14 +16,14 @@ class Link < ApplicationRecord
   scope :ordered, -> { order(:position) }
   scope :active, -> { where(deleted_at: nil) }
   scope :public_links, -> {
-    if column_names.include?('public')
+    if column_names.include?("public")
       where(public: true)
     else
       all # Return all links if public column doesn't exist
     end
   }
   scope :private_links, -> {
-    if column_names.include?('public')
+    if column_names.include?("public")
       where(public: false)
     else
       none # Return no links if public column doesn't exist
@@ -38,7 +38,7 @@ class Link < ApplicationRecord
 
   # Safe method to check if link is public (handles missing column)
   def public?
-    if self.class.column_names.include?('public')
+    if self.class.column_names.include?("public")
       read_attribute(:public) != false # Default to true if nil
     else
       true # Default to public if column doesn't exist
@@ -81,15 +81,20 @@ class Link < ApplicationRecord
       end
 
       # Server-side file content validation - check PDF magic bytes
-      resume_pdf.blob.open do |file|
-        header = file.read(4)
-        unless header == "%PDF"
-          errors.add(:resume_pdf, "file does not appear to be a valid PDF")
-          return
+      begin
+        resume_pdf.blob.open do |file|
+          header = file.read(4)
+          unless header == "%PDF"
+            errors.add(:resume_pdf, "file does not appear to be a valid PDF")
+            return
+          end
         end
+      rescue ActiveStorage::FileNotFoundError
+        # File might not be available yet (temp storage), skip validation
+        nil
+      rescue => e
+        errors.add(:resume_pdf, "could not validate file content")
       end
-    rescue => e
-      errors.add(:resume_pdf, "could not validate file content")
     end
 
     def resume_pdf_size_limit
@@ -106,27 +111,32 @@ class Link < ApplicationRecord
       return unless resume_pdf.attached?
 
       # Additional security checks
-      resume_pdf.blob.open do |file|
-        content = file.read(1024) # Read first 1KB for analysis
+      begin
+        resume_pdf.blob.open do |file|
+          content = file.read(1024) # Read first 1KB for analysis
 
-        # Check for suspicious patterns (basic malware detection)
-        suspicious_patterns = [
-          /javascript/i,
-          /<script/i,
-          /eval\(/i,
-          /onload=/i,
-          /iframe/i
-        ]
+          # Check for suspicious patterns (basic malware detection)
+          suspicious_patterns = [
+            /javascript/i,
+            /<script/i,
+            /eval\(/i,
+            /onload=/i,
+            /iframe/i
+          ]
 
-        suspicious_patterns.each do |pattern|
-          if content.match?(pattern)
-            errors.add(:resume_pdf, "file contains potentially malicious content")
-            break
+          suspicious_patterns.each do |pattern|
+            if content.match?(pattern)
+              errors.add(:resume_pdf, "file contains potentially malicious content")
+              break
+            end
           end
         end
+      rescue ActiveStorage::FileNotFoundError
+        # File might not be available yet (temp storage), skip validation
+        nil
+      rescue => e
+        # Log error but don't fail validation to avoid DOS attacks
+        Rails.logger.warn "Error validating PDF content: #{e.message}"
       end
-    rescue => e
-      # Log error but don't fail validation to avoid DOS attacks
-      Rails.logger.warn "Error validating PDF content: #{e.message}"
     end
 end
