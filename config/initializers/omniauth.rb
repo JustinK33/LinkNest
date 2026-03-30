@@ -2,6 +2,11 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   google_client_id = ENV["GOOGLE_CLIENT_ID"].to_s
   google_client_secret = ENV["GOOGLE_CLIENT_SECRET"].to_s
 
+  if Rails.env.test?
+    google_client_id = google_client_id.presence || "test-google-client-id"
+    google_client_secret = google_client_secret.presence || "test-google-client-secret"
+  end
+
   if google_client_id.present? && google_client_secret.present?
     provider :google_oauth2,
       google_client_id,
