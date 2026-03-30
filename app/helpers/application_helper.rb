@@ -1,4 +1,10 @@
 module ApplicationHelper
+  def google_oauth_enabled?
+    return true if Rails.env.development? || Rails.env.test?
+
+    ENV["GOOGLE_CLIENT_ID"].to_s.strip.present? && ENV["GOOGLE_CLIENT_SECRET"].to_s.strip.present?
+  end
+
   def public_app_host
     ENV.fetch("APP_PUBLIC_HOST", "https://linknest.info")
   end

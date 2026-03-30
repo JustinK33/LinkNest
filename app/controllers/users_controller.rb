@@ -23,6 +23,7 @@ class UsersController < ApplicationController
   end
 
   def edit
+    @show_oauth_setup_notice = session.delete(:oauth_setup_notice).present?
   end
 
   def update

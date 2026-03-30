@@ -80,10 +80,13 @@ A scalable multi-tenant link-in-bio platform that allows users to create customi
 
   1. Clone the repo (git clone <url>)
   2. Install dependencies (bundle install)
-  3. Setup database (rails db:create db:migrate)
-  4. Start Redis (redis-server)
-  5. Start Rails (rails server)
-  6. Start Sidekiq (in another terminal) (bundle exec sidekiq)
+  3. Add OAuth env vars if you want Google sign-in:
+     - GOOGLE_CLIENT_ID
+     - GOOGLE_CLIENT_SECRET
+    4. Setup database (rails db:create db:migrate)
+    5. Start Redis (redis-server)
+    6. Start Rails (rails server)
+    7. Start Sidekiq (in another terminal) (bundle exec sidekiq)
      
 ### Run with Docker
 

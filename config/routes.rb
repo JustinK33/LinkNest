@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  match "/auth/:provider/callback", to: "sessions#oauth_callback", via: [ :get, :post ]
+  get "/auth/failure", to: "sessions#oauth_failure"
+
   resource :session
   resources :passwords, param: :token
 

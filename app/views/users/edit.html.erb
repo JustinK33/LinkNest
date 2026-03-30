@@ -7,6 +7,13 @@
       <p>Update your public profile details</p>
     </div>
 
+    <% if @show_oauth_setup_notice %>
+      <div class="oauth-setup-banner" role="status" aria-live="polite">
+        <strong>One last step</strong>
+        <span>Finish your profile, then save to continue to your dashboard.</span>
+      </div>
+    <% end %>
+
     <% if @user.errors.any? %>
       <div class="error-messages">
         <h3>Please fix the following:</h3>

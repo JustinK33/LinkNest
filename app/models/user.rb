@@ -36,8 +36,57 @@ class User < ApplicationRecord
   validate :avatar_content_validation
   validate :slug_available_for_username, on: :create
 
-  before_validation :generate_slug, on: :create
+  before_validation :sync_slug_with_username, if: :should_sync_slug_with_username?
   before_create :generate_profile_color
+
+  def self.from_google_oauth(auth)
+    provider = auth.provider.to_s
+    uid = auth.uid.to_s
+    info = auth.info
+    email = info&.email.to_s.strip.downcase
+
+    raise ArgumentError, "Missing OAuth provider" if provider.blank?
+    raise ArgumentError, "Missing OAuth uid" if uid.blank?
+    raise ArgumentError, "Missing email from Google" if email.blank?
+
+    oauth_user = find_by(oauth_provider: provider, oauth_uid: uid)
+    return [ oauth_user, false ] if oauth_user
+
+    existing_user = find_by(email_address: email)
+    if existing_user
+      if existing_user.oauth_provider.present? && existing_user.oauth_uid.present?
+        if existing_user.oauth_provider != provider || existing_user.oauth_uid != uid
+          raise ArgumentError, "Google account does not match the existing linked login for this email"
+        end
+
+        return [ existing_user, false ]
+      end
+
+      existing_user.update!(oauth_provider: provider, oauth_uid: uid)
+      return [ existing_user, false ]
+    end
+
+    full_name = info&.name.to_s.strip
+    first_name = info&.first_name.presence || full_name.split.first || "Google"
+    last_name = info&.last_name.presence || full_name.split.drop(1).join(" ").presence || "User"
+    username = unique_username_for_oauth_email(email)
+
+    generated_password = "#{SecureRandom.base58(24)}1!"
+
+    created_user = create!(
+      username: username,
+      first_name: first_name,
+      last_name: last_name,
+      email_address: email,
+      password: generated_password,
+      password_confirmation: generated_password,
+      oauth_provider: provider,
+      oauth_uid: uid
+    )
+
+    [ created_user, true ]
+  end
+
 
   def to_param
     slug
@@ -76,6 +125,19 @@ class User < ApplicationRecord
   end
 
   private
+    def self.unique_username_for_oauth_email(email)
+      base = email.split("@").first.to_s.parameterize(separator: "_").presence || "user"
+      candidate = base
+      suffix = 1
+
+      while exists?(username: candidate)
+        candidate = "#{base}_#{suffix}"
+        suffix += 1
+      end
+
+      candidate
+    end
+
     def validate_slug_format?
       new_record? || will_save_change_to_slug?
     end
@@ -84,20 +146,21 @@ class User < ApplicationRecord
       password.present?
     end
 
-    def generate_slug
-      return if slug.present? || username.blank?
+    def should_sync_slug_with_username?
+      username.present? && (new_record? || will_save_change_to_username?)
+    end
 
+    def sync_slug_with_username
       self.slug = username.to_s.parameterize
     end
 
     def generate_profile_color
-      return if profile_color.present?
+      return if profile_color.present? && profile_color != "#3b82f6"
 
-      # Deterministic color generation based on username
-      # Ensures same user always gets the same color, but different users get different colors
-      hue = (username.sum % 360)
-      saturation = 65
-      lightness = 50
+      # Assign a varied default color for new accounts.
+      hue = SecureRandom.random_number(360)
+      saturation = 55 + SecureRandom.random_number(21)
+      lightness = 42 + SecureRandom.random_number(17)
 
       self.profile_color = "hsl(#{hue}, #{saturation}%, #{lightness}%)"
     end
@@ -147,7 +210,7 @@ class User < ApplicationRecord
           errors.add(:avatar, "file does not appear to be a valid image")
         end
       end
-    rescue => e
+    rescue
       errors.add(:avatar, "could not validate file content")
     end
 

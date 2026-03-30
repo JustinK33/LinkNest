@@ -717,6 +717,39 @@ textarea {
   color: var(--color-gray-700) !important;
 }
 
+.btn-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  position: relative;
+  overflow: visible;
+}
+
+.btn-google svg {
+  flex-shrink: 0;
+}
+
+.btn-google-label {
+  font-weight: 600;
+}
+
+.auth-last-used-badge {
+  position: absolute;
+  right: 0.75rem;
+  top: -0.6rem;
+  background: linear-gradient(135deg, #dce8ff, #c6dbff);
+  color: #2f5aa8;
+  border: 1px solid #9fc0ff;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  line-height: 1;
+  padding: 0.22rem 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 3px 8px rgba(55, 104, 180, 0.2);
+}
+
 /* Focus styles for accessibility */
 .btn:focus-visible {
   outline: none;
@@ -738,9 +771,40 @@ textarea {
   margin-top: 1.4rem;
 }
 
+.auth-divider {
+  margin: 1rem 0;
+  text-align: center;
+  color: var(--color-gray-500);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .auth-footer-muted {
   margin-top: 0.6rem;
   color: var(--color-gray-600);
+}
+
+.oauth-setup-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid #9fc0ff;
+  background: linear-gradient(135deg, #eef4ff, #deebff);
+  color: #224a90;
+  box-shadow: 0 6px 16px rgba(63, 104, 173, 0.12);
+}
+
+.oauth-setup-banner strong {
+  font-size: 0.88rem;
+}
+
+.oauth-setup-banner span {
+  font-size: 0.84rem;
 }
 
 /* ===== Profile Card ===== */
