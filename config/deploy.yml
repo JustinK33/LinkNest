@@ -1,10 +1,6 @@
-# Name of your application. Used to uniquely configure containers.
 service: store
-
-# Name of the container image (use your-user/app-name on external registries).
 image: justink33/linknest
 
-# Deploy to these servers.
 servers:
   web:
     hosts:
@@ -44,3 +40,6 @@ asset_path: /rails/public/assets
 
 builder:
   arch: amd64
+
+ssh:
+  user: ec2-user
