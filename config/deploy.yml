@@ -8,13 +8,13 @@ image: justink33/linknest
 servers:
   web:
     hosts:
-      - 192.168.0.1
+      - 54.89.195.68
     env:
       clear:
         SOLID_QUEUE_IN_PUMA: true
   job:
     hosts:
-      - 192.168.0.1
+      - 54.89.195.68
     cmd: bin/jobs
     env:
       clear:
