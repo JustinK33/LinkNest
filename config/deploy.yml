@@ -7,10 +7,10 @@ image: store
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    hosts:
+      - 192.168.0.1
     env:
       clear:
-        # Run Solid Queue inside Puma for single-server or web-only deployments
         SOLID_QUEUE_IN_PUMA: true
   job:
     hosts:
@@ -18,9 +18,7 @@ servers:
     cmd: bin/jobs
     env:
       clear:
-        # Disable Solid Queue in Puma for dedicated job processors
         SOLID_QUEUE_IN_PUMA: false
-        # Set job concurrency for dedicated job processors
         JOB_CONCURRENCY: 3
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
