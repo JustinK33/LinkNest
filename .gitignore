@@ -33,4 +33,13 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Ignore Kamal secrets (must never contain raw credentials).
+/.kamal/secrets
+
+# OS / editor cruft.
+.DS_Store
+
+# Node deps (unused with importmap, defensive).
+/node_modules
+
 *.md

@@ -2,7 +2,7 @@
 service: store
 
 # Name of the container image (use your-user/app-name on external registries).
-image: store
+image: justink33/linknest
 
 # Deploy to these servers.
 servers:
@@ -22,7 +22,10 @@ servers:
         JOB_CONCURRENCY: 3
 
 registry:
-  server: localhost:5555
+  server: ghcr.io
+  username: JustinK33
+  password:
+    - GHCR_TOKEN
 
 env:
   secret:
