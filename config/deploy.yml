@@ -43,3 +43,5 @@ builder:
 
 ssh:
   user: ec2-user
+  keys:
+    - ~/.ssh/linknest.pem
