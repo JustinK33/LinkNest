@@ -15,7 +15,6 @@ services:
     expose:
       - "3000"
     volumes:
-      - bundle:/usr/local/bundle
       - storage:/rails/storage
       - log:/rails/log
       - tmp:/rails/tmp
@@ -63,14 +62,12 @@ services:
       web:
         condition: service_healthy
     volumes:
-      - bundle:/usr/local/bundle
       - storage:/rails/storage
       - log:/rails/log
       - tmp:/rails/tmp
     restart: unless-stopped
 
 volumes:
-  bundle:
   storage:
   log:
   tmp:

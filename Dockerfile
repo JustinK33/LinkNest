@@ -1,70 +1,59 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t store .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name store store
-
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
-
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=4.0.1
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
-# Rails app lives here
 WORKDIR /rails
 
-# Install base packages
-RUN apt-get update -qq && \
+# Install base packages; apt cache mounted to avoid re-downloading on rebuilds
+RUN --mount=type=cache,id=apt-base,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-base-lists,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       curl libjemalloc2 libvips \
       default-mysql-client \
-    && ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so \
-    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    && ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
 
-# Set production environment variables and enable jemalloc for reduced memory usage and latency.
+# Set production environment; exclude dev/test/tools groups so kamal/capybara etc. never install
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
+    BUNDLE_WITHOUT="development:test:tools" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems
-RUN apt-get update -qq && \
+RUN --mount=type=cache,id=apt-build,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-build-lists,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       build-essential git libyaml-dev pkg-config \
-      default-libmysqlclient-dev zlib1g-dev \
-    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+      default-libmysqlclient-dev zlib1g-dev
 
-# Install application gems
-COPY vendor/* ./vendor/
+# Install application gems; --jobs uses all available CPUs
+COPY vendor/ ./vendor/
 COPY Gemfile Gemfile.lock ./
 
-RUN bundle install && \
+RUN bundle install --jobs $(nproc) && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
+    # -j 1 disables parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
 
 # Copy application code
 COPY . .
 
-# Precompile bootsnap code for faster boot times.
-# -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
+# Precompile bootsnap code for faster boot times
+# -j 1 disables parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
+# Precompile assets without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 DATABASE_URL=mysql2://localhost/placeholder ./bin/rails assets:precompile
-
-
-
 
 # Final stage for app image
 FROM base
 
-# Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
