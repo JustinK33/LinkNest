@@ -1,31 +1,13 @@
-# MySQL Database Configuration
-# This project uses MySQL 8.0+ with the mysql2 gem
-#   gem "mysql2", "~> 0.5"
-#
-default: &default
-  adapter: mysql2
-  encoding: utf8mb4
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
-  timeout: 5000
-
-development:
-  <<: *default
-  url: "<%= ENV['DATABASE_URL'] %>"
-
-test:
-  <<: *default
-  url: "<%= ENV['DATABASE_URL'] %>"
-
 production:
   primary:
     <<: *default
-    url: "<%= ENV.fetch('DATABASE_URL', 'mysql2://localhost/placeholder') %>"
+    url: "<%= ENV['DATABASE_URL'].presence || 'mysql2://localhost/placeholder' %>"
   cache:
     <<: *default
-    url: "<%= ENV.fetch('DATABASE_URL', 'mysql2://localhost/placeholder') %>"
+    url: "<%= ENV['DATABASE_URL'].presence || 'mysql2://localhost/placeholder' %>"
   queue:
     <<: *default
-    url: "<%= ENV.fetch('DATABASE_URL', 'mysql2://localhost/placeholder') %>"
+    url: "<%= ENV['DATABASE_URL'].presence || 'mysql2://localhost/placeholder' %>"
   cable:
     <<: *default
-    url: "<%= ENV.fetch('DATABASE_URL', 'mysql2://localhost/placeholder') %>"
+    url: "<%= ENV['DATABASE_URL'].presence || 'mysql2://localhost/placeholder' %>"
