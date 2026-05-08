@@ -7,7 +7,8 @@ class LinksControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     file = Tempfile.new([ "resume", ".pdf" ])
-    file.binwrite("%PDF-1.4\n%test\n")
+    file.binmode
+    file.write("%PDF-1.4\n%test\n")
     file.rewind
 
     uploaded_file = Rack::Test::UploadedFile.new(file.path, "application/pdf")
