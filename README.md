@@ -73,7 +73,7 @@ Important variables:
 
 ```sh
 ADDR=:8080
-DATABASE_URL=postgres://linknest:linknest@postgres:5432/linknest?sslmode=disable
+GO_DATABASE_URL=postgres://linknest:linknest@postgres:5432/linknest?sslmode=disable
 SESSION_SECRET=replace-with-a-long-random-secret
 DB_MAX_OPEN_CONNS=20
 DB_MAX_IDLE_CONNS=10
@@ -93,10 +93,17 @@ Current local benchmark sample on Apple M4:
 - `BenchmarkIdempotencyKey`: about `229 ns/op`
 - `BenchmarkMetricsIncrement`: about `13.76 ns/op`, `0 B/op`, `0 allocs/op`
 
+Current k6 ingestion result against the Docker Compose Go/PostgreSQL stack:
+
+- Sustained `957.89 events/sec` at `21.92 ms p95` under `100` concurrent users with `0%` request failures.
+- Verified `28,835` persisted click events and `28,835` unique idempotency keys in PostgreSQL.
+- Batched SQL hourly rollup processed `28,835` events in `36.415 ms`.
+- Batched SQL daily rollup processed `28,835` events in `40.937 ms`.
+
 Run the k6 click-ingestion load test after creating a user and public link:
 
 ```sh
-k6 run -e BASE_URL=http://localhost:8080 -e LINK_ID=1 -e VUS=50 -e DURATION=30s loadtest/k6-clicks.js
+k6 run -e BASE_URL=http://localhost:8081 -e LINK_ID=1 -e VUS=100 -e DURATION=30s loadtest/k6-clicks.js
 ```
 
 ## Project Layout
@@ -128,3 +135,4 @@ This rewrite is intentionally structured around interview-friendly backend and d
 - Batched SQL rollups with snapshotting.
 - Prometheus-style observability.
 - k6 load-test harness and Go benchmarks.
+- Sustained `957.89 events/sec` at `21.92 ms p95` under `100` concurrent users using composite indexes, batched SQL rollups, and tuned connection pooling.

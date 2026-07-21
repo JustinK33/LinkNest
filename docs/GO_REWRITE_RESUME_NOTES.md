@@ -103,9 +103,21 @@ Example command:
 k6 run -e BASE_URL=http://localhost:8080 -e LINK_ID=1 -e VUS=50 -e DURATION=30s loadtest/k6-clicks.js
 ```
 
-Resume bullet after running a real load test:
+Measured k6 result against the Docker Compose Go/PostgreSQL stack:
 
-- Built k6 load tests simulating concurrent click ingestion across public links, validating p95 latency, error rate, and sustained event throughput.
+- `100` concurrent users.
+- `28,835` successful tracking requests in `30s`.
+- `957.89 events/sec`.
+- `21.92 ms p95`.
+- `0%` request failures.
+- `28,835` persisted click events.
+- `28,835` unique idempotency keys.
+- Hourly SQL rollup processed `28,835` events in `36.415 ms`.
+- Daily SQL rollup processed `28,835` events in `40.937 ms`.
+
+Resume bullet:
+
+- Sustained `957.89 events/sec` at `21.92 ms p95` under `100` concurrent users using composite indexes, batched SQL rollups, and tuned PostgreSQL connection pooling.
 
 ### 7. Security
 
@@ -152,6 +164,9 @@ Result:
 - Unit tests passed for auth, session signing, slug generation, idempotency key bucketing, URL normalization, device/browser parsing, metrics rendering, and store construction.
 - `BenchmarkIdempotencyKey`: about `229 ns/op`, `280 B/op`, `9 allocs/op` on Apple M4.
 - `BenchmarkMetricsIncrement`: about `13.76 ns/op`, `0 B/op`, `0 allocs/op` on Apple M4.
+- k6 click-ingestion test: `957.89 events/sec`, `21.92 ms p95`, `0%` failures under `100` concurrent users.
+- PostgreSQL verification: `28,835` click events, `28,835` unique idempotency keys, and `28,835` cached link clicks.
+- SQL rollup verification: hourly aggregation completed in `36.415 ms`, and daily aggregation completed in `40.937 ms`.
 
 ## Strong Resume Bullets
 
@@ -161,3 +176,4 @@ Result:
 - Implemented batched hourly and daily analytics workers using `INSERT ... SELECT` aggregation, daily snapshots, and 90-day raw event retention.
 - Exposed Prometheus-compatible metrics for request volume, ingestion deduplication, worker throughput, processing latency, and cleanup activity.
 - Added Go unit tests and benchmarks plus a k6 load-test harness for validating latency, throughput, and duplicate-event protection.
+- Sustained `957.89 events/sec` at `21.92 ms p95` under `100` concurrent users using composite indexes, batched SQL rollups, and tuned PostgreSQL connection pooling.
