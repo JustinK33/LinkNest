@@ -3,7 +3,7 @@
 [![CI](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml)
 
 LinkNest is a Go and PostgreSQL link-in-bio platform with public profiles, authenticated dashboard management, click tracking, analytics rollups, metrics, and load-test hooks.
-The application was rewritten from Rails into a smaller Go service with explicit database and systems-engineering primitives.
+The current codebase is a compact Go service with explicit database and systems-engineering primitives.
 
 ## Tech Stack
 
@@ -58,7 +58,7 @@ docker compose up --build
 Open the app:
 
 ```text
-http://localhost:8080
+http://localhost:8081
 ```
 
 The Compose stack starts PostgreSQL and the Go web service.
@@ -129,7 +129,7 @@ docs/                  Engineering and resume notes
 
 This rewrite is intentionally structured around interview-friendly backend and data-engineering work:
 
-- Go service rewrite from a Rails monolith.
+- Go service architecture with server-rendered HTML and REST-style API endpoints.
 - PostgreSQL schema design with composite indexes and foreign keys.
 - Idempotent event ingestion and append-only analytics history.
 - Batched SQL rollups with snapshotting.

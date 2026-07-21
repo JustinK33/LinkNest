@@ -2,8 +2,8 @@
 
 ## Summary
 
-LinkNest was rewritten from a Rails application into a Go and PostgreSQL service.
-The rewrite keeps the core product shape: authenticated users, public link profiles, dashboard management, click tracking, and analytics.
+LinkNest is implemented as a Go and PostgreSQL service.
+The application supports authenticated users, public link profiles, dashboard management, click tracking, and analytics.
 It also adds systems and data-engineering concepts that are natural for a write-heavy analytics product.
 
 ## Implemented Improvements
@@ -100,7 +100,7 @@ The script simulates concurrent users sending click events with unique idempoten
 Example command:
 
 ```sh
-k6 run -e BASE_URL=http://localhost:8080 -e LINK_ID=1 -e VUS=50 -e DURATION=30s loadtest/k6-clicks.js
+k6 run -e BASE_URL=http://localhost:8081 -e LINK_ID=1 -e VUS=100 -e DURATION=30s loadtest/k6-clicks.js
 ```
 
 Measured k6 result against the Docker Compose Go/PostgreSQL stack:
@@ -170,7 +170,7 @@ Result:
 
 ## Strong Resume Bullets
 
-- Rewrote a Rails link-in-bio analytics app in Go and PostgreSQL, preserving authenticated dashboards, public profiles, click tracking, and analytics rollups.
+- Built a Go and PostgreSQL link-in-bio analytics app with authenticated dashboards, public profiles, click tracking, and analytics rollups.
 - Built append-only click-event logging with idempotency keys, transactional counter updates, and replayable analytics history.
 - Designed PostgreSQL schemas with composite indexes, foreign keys, and SQL upserts for high-volume event ingestion and reporting queries.
 - Implemented batched hourly and daily analytics workers using `INSERT ... SELECT` aggregation, daily snapshots, and 90-day raw event retention.

@@ -13,7 +13,7 @@ export const options = {
 export default function () {
   const linkID = __ENV.LINK_ID || "1";
   const key = `${__VU}-${__ITER}`;
-  const res = http.post(`${__ENV.BASE_URL || "http://localhost:8080"}/links/${linkID}/track_click`, null, {
+  const res = http.post(`${__ENV.BASE_URL || "http://localhost:8081"}/links/${linkID}/track_click`, null, {
     headers: {
       "Idempotency-Key": key,
       "User-Agent": "k6-linknest-load-test",
