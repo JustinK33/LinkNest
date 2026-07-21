@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - LinkNest</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main class="shell">
+    <nav class="nav">
+      <a class="brand" href="/">LinkNest</a>
+      <div class="nav-actions">
+        <a href="/{{.User.Slug}}">Public profile</a>
+        <form method="post" action="/logout"><button>Sign out</button></form>
+      </div>
+    </nav>
+    <section class="grid">
+      <article class="panel">
+        <h1>{{.User.Username}}</h1>
+        <p class="muted">/{{.User.Slug}}</p>
+        <form method="post" action="/profile" class="stack">
+          <input name="first_name" value="{{.User.FirstName}}" required>
+          <input name="last_name" value="{{.User.LastName}}" required>
+          <textarea name="bio" rows="4" placeholder="Bio">{{.User.Bio}}</textarea>
+          <button class="button">Save profile</button>
+        </form>
+      </article>
+      <article class="panel stats">
+        <h2>Analytics</h2>
+        <div><strong>{{.TotalClicks}}</strong><span>Total clicks</span></div>
+        <div><strong>{{.UniqueVisitors}}</strong><span>Unique visitors</span></div>
+      </article>
+    </section>
+    <section class="grid">
+      <article class="panel">
+        <h2>Add link</h2>
+        <form method="post" action="/links" class="stack">
+          <input name="title" placeholder="Title" required>
+          <input name="url" placeholder="https://example.com" required>
+          <label class="check"><input type="checkbox" name="public" checked> Public</label>
+          <button class="button">Add link</button>
+        </form>
+      </article>
+      <article class="panel">
+        <h2>Links</h2>
+        <div class="list">
+          {{range .Links}}
+            <div class="row">
+              <div><strong>{{.Title}}</strong><p>{{.URL}}</p></div>
+              <span>{{.ClickCount}} clicks</span>
+            </div>
+          {{else}}
+            <p class="muted">No links yet.</p>
+          {{end}}
+        </div>
+      </article>
+    </section>
+    <section class="panel">
+      <h2>Daily rollups</h2>
+      <div class="list">
+        {{range .Daily}}
+          <div class="row">
+            <span>{{.Date.Format "2006-01-02"}}</span>
+            <span>{{.TotalClicks}} clicks - {{.UniqueVisitors}} visitors</span>
+          </div>
+        {{else}}
+          <p class="muted">Rollups appear after the daily worker runs.</p>
+        {{end}}
+      </div>
+    </section>
+  </main>
+</body>
+</html>

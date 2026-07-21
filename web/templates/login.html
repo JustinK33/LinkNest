@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in - LinkNest</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main class="auth-panel">
+    <h1>Sign in</h1>
+    {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+    <form method="post" action="/login" class="stack">
+      <input name="email" type="email" placeholder="Email" required>
+      <input name="password" type="password" placeholder="Password" required>
+      <button class="button">Sign in</button>
+    </form>
+    <p><a href="/register">Create account</a></p>
+  </main>
+</body>
+</html>

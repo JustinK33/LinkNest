@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.User.Username}} - LinkNest</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main class="profile">
+    <div class="avatar" style="background: {{.User.ProfileColor}}"></div>
+    <h1>{{.User.FirstName}} {{.User.LastName}}</h1>
+    <p>{{.User.Bio}}</p>
+    <div class="link-stack">
+      {{range .Links}}
+        <a class="public-link" href="{{.URL}}" data-link-id="{{.ID}}">{{.Title}}</a>
+      {{else}}
+        <p class="muted">No public links yet.</p>
+      {{end}}
+    </div>
+  </main>
+  <script>
+    document.querySelectorAll("[data-link-id]").forEach(function(link) {
+      link.addEventListener("click", function() {
+        navigator.sendBeacon("/links/" + link.dataset.linkId + "/track_click");
+      });
+    });
+  </script>
+</body>
+</html>

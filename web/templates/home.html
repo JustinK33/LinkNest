@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LinkNest</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main class="shell">
+    <nav class="nav">
+      <a class="brand" href="/">LinkNest</a>
+      <div class="nav-actions">
+        {{if .User.ID}}
+          <a href="/dashboard">Dashboard</a>
+          <form method="post" action="/logout"><button>Sign out</button></form>
+        {{else}}
+          <a href="/login">Sign in</a>
+          <a class="button" href="/register">Create account</a>
+        {{end}}
+      </div>
+    </nav>
+    <section class="hero">
+      <div>
+        <h1>One profile for every important link.</h1>
+        <p>Publish a focused public page, track engagement, and understand which links are getting attention.</p>
+        <a class="button" href="/register">Start</a>
+      </div>
+      <div class="preview">
+        <div class="avatar"></div>
+        <strong>@linknest</strong>
+        <span>Portfolio</span>
+        <span>Resume</span>
+        <span>Contact</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
