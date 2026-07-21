@@ -46,13 +46,7 @@
 # Ignore development files
 /.devcontainer
 
-# Ignore Docker-related files
-/.dockerignore
-/Dockerfile*
-
-# Ignore test files and documentation
+# Ignore legacy Rails tests.
 /test/
 /spec/
-*.md
-*.txt
 /requirements.txt
