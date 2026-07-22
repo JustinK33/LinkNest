@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
 	"html/template"
 	"net"
@@ -343,8 +342,4 @@ func reservedSlug(slug string) bool {
 	default:
 		return false
 	}
-}
-
-func WithTimeout(r *http.Request) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(r.Context(), 3*time.Second)
 }
