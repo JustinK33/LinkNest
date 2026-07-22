@@ -2,137 +2,101 @@
 
 [![CI](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml)
 
-LinkNest is a Go and PostgreSQL link-in-bio platform with public profiles, authenticated dashboard management, click tracking, analytics rollups, metrics, and load-test hooks.
-The current codebase is a compact Go service with explicit database and systems-engineering primitives.
+A link-in-bio app in Go and PostgreSQL.
+Users register, build a public profile of links, and every click gets tracked as an event that feeds hourly and daily analytics.
 
-## Tech Stack
+I built it to have a small, real service where the interesting parts are in the data layer: idempotent ingestion, an append-only event log, batched SQL rollups, and connection-pool tuning.
 
-- Go 1.26
-- PostgreSQL
-- `net/http`
-- `database/sql`
-- `pgx`
-- Docker and Docker Compose
-- Prometheus-compatible metrics
-- k6 load testing
+## Stack
 
-## Architecture
+- Go 1.26, standard library `net/http` and `database/sql`
+- PostgreSQL via the `pgx` driver
+- Server-rendered HTML templates
+- Prometheus-style metrics on `/metrics`
+- Docker Compose for local dev, k6 for load testing
 
-The Go service serves both HTML pages and REST-style API endpoints.
-PostgreSQL stores users, signed sessions, links, append-only click events, hourly rollups, daily rollups, analytics snapshots, and worker run history.
-Background workers run inside the Go process and batch aggregation work with SQL upserts.
+## How it works
 
-Core paths:
+One Go process serves the HTML pages and the JSON API and runs the background aggregation workers.
+PostgreSQL holds users, signed sessions, links, and an append-only `click_events` table.
+Workers periodically roll raw events up into hourly and daily stats with `INSERT ... SELECT ... ON CONFLICT DO UPDATE`, so reporting reads never scan the raw event stream.
 
-- `GET /` - landing page
-- `GET /register` and `POST /register` - account creation
-- `GET /login` and `POST /login` - session login
-- `GET /dashboard` - authenticated profile, link, and analytics dashboard
-- `GET /{slug}` - public profile
-- `POST /links/{id}/track_click` - idempotent click ingestion
-- `GET /api/v1/events?limit=50&after=0` - cursor-paginated event history
-- `GET /api/v1/status` - database status summary
-- `GET /metrics` - Prometheus-compatible metrics
-- `GET /up` - health check
+### Routes
 
-## Systems Features
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/` | Landing page |
+| GET/POST | `/register` | Account creation |
+| GET/POST | `/login` | Session login |
+| POST | `/logout` | End session |
+| GET | `/dashboard` | Links + analytics (auth) |
+| POST | `/profile`, `/links` | Update profile, add a link (auth) |
+| GET | `/{slug}` | Public profile |
+| POST | `/links/{id}/track_click` | Idempotent click ingestion |
+| GET | `/api/v1/events?limit=50&after=0` | Cursor-paginated event history (auth) |
+| GET | `/api/v1/status` | Database status summary (auth) |
+| GET | `/metrics` | Prometheus metrics |
+| GET | `/up` | Health check |
 
-- Append-only `click_events` table for replayable analytics history.
-- Idempotent click ingestion with `Idempotency-Key` support and deterministic fallback keys.
-- Transactional writes for link creation and click ingestion.
-- Composite PostgreSQL indexes for profile lookup, public link listing, event ingestion, and analytics ranges.
-- Batched hourly and daily aggregations with `INSERT ... SELECT ... ON CONFLICT DO UPDATE`.
-- Analytics snapshots that capture daily totals and source event high-water marks.
-- Connection pool tuning through `DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, and `DB_CONN_MAX_LIFETIME_SECONDS`.
-- Prometheus-compatible counters, gauges, and duration metrics.
-- k6 script for concurrent click-ingestion load testing.
+### Things worth pointing out
 
-## Local Development
+- **Idempotent clicks.** `track_click` honors an `Idempotency-Key` header and derives a deterministic key (link + IP + user agent + referrer + one-minute bucket) when the client doesn't send one. The DB enforces uniqueness and `ON CONFLICT DO NOTHING` drops duplicates.
+- **Append-only events.** `click_events` is never mutated, so analytics can always be replayed. Daily snapshots keep a `source_event_max_id` high-water mark for auditing after a worker crash.
+- **Batched rollups.** Aggregation happens in single SQL statements rather than app-side loops.
+- **Composite indexes** cover each real query path - dashboard ordering, public listing, unique-visitor counts, top-link ranking.
+- **Tuned pooling** via `DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, `DB_CONN_MAX_LIFETIME_SECONDS`.
 
-Run the full stack:
+## Running it
 
 ```sh
 docker compose up --build
 ```
 
-Open the app:
+Then open http://localhost:8081.
+Compose starts PostgreSQL and the web service; the app applies `migrations/001_init_postgres.sql` on boot.
 
-```text
-http://localhost:8081
-```
+### Configuration
 
-The Compose stack starts PostgreSQL and the Go web service.
-The Go process applies `migrations/001_init_postgres.sql` on boot.
-
-## Environment
-
-Use environment variables for all sensitive values.
-Never commit `.env` files.
-
-Important variables:
+All config comes from environment variables. Never commit a `.env`.
 
 ```sh
 ADDR=:8080
-GO_DATABASE_URL=postgres://linknest:linknest@postgres:5432/linknest?sslmode=disable
+DATABASE_URL=postgres://linknest:linknest@localhost:5432/linknest?sslmode=disable
 SESSION_SECRET=replace-with-a-long-random-secret
 DB_MAX_OPEN_CONNS=20
 DB_MAX_IDLE_CONNS=10
 DB_CONN_MAX_LIFETIME_SECONDS=300
 ```
 
+Compose reads `GO_DATABASE_URL` from your `.env` and passes it into the container as `DATABASE_URL`.
+
 ## Testing
 
-Run unit tests and benchmarks:
-
 ```sh
-env GOCACHE=/private/tmp/linknest-go-cache GOPATH=/private/tmp/linknest-go go test ./... -bench=. -benchmem
+go test ./... -bench=. -benchmem
 ```
 
-Current local benchmark sample on Apple M4:
-
-- `BenchmarkIdempotencyKey`: about `229 ns/op`
-- `BenchmarkMetricsIncrement`: about `13.76 ns/op`, `0 B/op`, `0 allocs/op`
-
-Current k6 ingestion result against the Docker Compose Go/PostgreSQL stack:
-
-- Sustained `957.89 events/sec` at `21.92 ms p95` under `100` concurrent users with `0%` request failures.
-- Verified `28,835` persisted click events and `28,835` unique idempotency keys in PostgreSQL.
-- Batched SQL hourly rollup processed `28,835` events in `36.415 ms`.
-- Batched SQL daily rollup processed `28,835` events in `40.937 ms`.
-
-Run the k6 click-ingestion load test after creating a user and public link:
+Load test (after creating a user with a public link):
 
 ```sh
 k6 run -e BASE_URL=http://localhost:8081 -e LINK_ID=1 -e VUS=100 -e DURATION=30s loadtest/k6-clicks.js
 ```
 
-## Project Layout
+On my machine (Apple M4, Docker Compose stack) a 30s run at 100 VUs sustained ~958 clicks/sec at 21.9 ms p95 with zero failures, and the hourly/daily rollups each processed the ~28.8k resulting events in under 45 ms.
+
+## Layout
 
 ```text
-cmd/linknest/          Go entrypoint
-internal/auth/         Passwords, signed sessions, slugs, idempotency keys
-internal/config/       Environment-based configuration
-internal/db/           PostgreSQL connection and migration runner
-internal/http/         HTTP routes and handlers
-internal/metrics/      Prometheus-compatible in-memory metrics registry
-internal/models/       Domain structs
-internal/store/        SQL queries, transactions, upserts, aggregation
-internal/worker/       Periodic analytics workers
-migrations/            PostgreSQL schema
-web/templates/         Server-rendered HTML
-web/static/            CSS
-loadtest/              k6 scripts
-docs/                  Engineering and resume notes
+cmd/linknest/     entrypoint
+internal/auth/    passwords, signed sessions, slugs, idempotency keys
+internal/config/  env config
+internal/db/      connection + migration runner
+internal/http/    routes and handlers
+internal/metrics/ in-memory Prometheus registry
+internal/models/  domain structs
+internal/store/   SQL, transactions, aggregation
+internal/worker/  periodic analytics workers
+migrations/       schema
+web/              templates + CSS
+loadtest/         k6 scripts
 ```
-
-## Resume Angles
-
-This rewrite is intentionally structured around interview-friendly backend and data-engineering work:
-
-- Go service architecture with server-rendered HTML and REST-style API endpoints.
-- PostgreSQL schema design with composite indexes and foreign keys.
-- Idempotent event ingestion and append-only analytics history.
-- Batched SQL rollups with snapshotting.
-- Prometheus-style observability.
-- k6 load-test harness and Go benchmarks.
-- Sustained `957.89 events/sec` at `21.92 ms p95` under `100` concurrent users using composite indexes, batched SQL rollups, and tuned connection pooling.
