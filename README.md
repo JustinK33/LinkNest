@@ -17,6 +17,10 @@ I built it to have a small, real service where the interesting parts are in the 
 
 ## How it works
 
+A user signs up, adds their links, and gets a public page at their own slug - the classic "link in bio" page you'd put in a social media profile.
+Every visit to a link is recorded as a click, and those clicks roll up into the analytics a user sees on their dashboard.
+The interesting part isn't the page itself, it's how clicks get counted reliably at volume without slowing anything down.
+
 One Go process serves the HTML pages and the JSON API and runs the background aggregation workers.
 PostgreSQL holds users, signed sessions, links, and an append-only `click_events` table.
 Workers periodically roll raw events up into hourly and daily stats with `INSERT ... SELECT ... ON CONFLICT DO UPDATE`, so reporting reads never scan the raw event stream.
