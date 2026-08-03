@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"sync"
 
-	"linknest/internal/app"
-	"linknest/internal/config"
-	"linknest/internal/db"
+	"linknest/app"
+	"linknest/config"
+	"linknest/db"
 )
 
 var (

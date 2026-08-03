@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 
-	"linknest/internal/config"
+	"linknest/config"
 )
 
 //go:embed migrations/001_init_mysql.sql

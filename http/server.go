@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"linknest/internal/auth"
-	"linknest/internal/config"
-	"linknest/internal/metrics"
-	"linknest/internal/models"
-	"linknest/internal/store"
+	"linknest/auth"
+	"linknest/config"
+	"linknest/metrics"
+	"linknest/models"
+	"linknest/store"
 	"linknest/web"
 )
 

@@ -45,4 +45,4 @@ DATABASE_URL=mysql://user:password@host:4000/dbname?tls=true
 SESSION_SECRET=replace-with-a-long-random-secret
 ```
 
-The hourly/daily analytics rollups (`internal/worker`) don't run on Vercel - serverless functions aren't long-lived enough for a background ticker. Pages, auth, links, and click tracking all work; run `cmd/linknest` somewhere long-lived (Docker/Kamal) if you need the rollups too.
+The hourly/daily analytics rollups (`worker/`) don't run on Vercel - serverless functions aren't long-lived enough for a background ticker. Pages, auth, links, and click tracking all work; run `cmd/linknest` somewhere long-lived (Docker/Kamal) if you need the rollups too.

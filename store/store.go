@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"linknest/internal/auth"
-	"linknest/internal/models"
+	"linknest/auth"
+	"linknest/models"
 )
 
 type Store struct {

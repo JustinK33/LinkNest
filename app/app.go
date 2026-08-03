@@ -5,12 +5,12 @@ import (
 	"html/template"
 	"net/http"
 
-	"linknest/internal/config"
-	apphttp "linknest/internal/http"
-	"linknest/internal/metrics"
-	"linknest/internal/store"
-	"linknest/internal/worker"
+	"linknest/config"
+	apphttp "linknest/http"
+	"linknest/metrics"
+	"linknest/store"
 	"linknest/web"
+	"linknest/worker"
 )
 
 type App struct {

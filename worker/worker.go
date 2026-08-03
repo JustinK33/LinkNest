@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"linknest/internal/metrics"
-	"linknest/internal/store"
+	"linknest/metrics"
+	"linknest/store"
 )
 
 type Manager struct {

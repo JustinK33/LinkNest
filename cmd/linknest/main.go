@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"linknest/internal/app"
-	"linknest/internal/config"
-	"linknest/internal/db"
+	"linknest/app"
+	"linknest/config"
+	"linknest/db"
 )
 
 func main() {
