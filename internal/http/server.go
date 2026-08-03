@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"html/template"
+	"io/fs"
 	"net"
 	"net/http"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	"linknest/internal/metrics"
 	"linknest/internal/models"
 	"linknest/internal/store"
+	"linknest/web"
 )
 
 type Server struct {
@@ -28,8 +30,12 @@ func New(cfg config.Config, st *store.Store, registry *metrics.Registry, tmpl *t
 }
 
 func (s *Server) Routes() http.Handler {
+	staticFS, err := fs.Sub(web.Static, "static")
+	if err != nil {
+		panic(err)
+	}
 	mux := http.NewServeMux()
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(staticFS)))
 	mux.HandleFunc("GET /", s.home)
 	mux.HandleFunc("GET /up", s.up)
 	mux.Handle("GET /metrics", s.metrics.Handler())

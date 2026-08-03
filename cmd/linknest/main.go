@@ -24,7 +24,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	if err := db.Migrate(ctx, pool, "migrations/001_init_postgres.sql"); err != nil {
+	if err := db.Migrate(ctx, pool); err != nil {
 		log.Fatalf("migrate database: %v", err)
 	}
 

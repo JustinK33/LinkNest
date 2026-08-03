@@ -10,6 +10,7 @@ import (
 	"linknest/internal/metrics"
 	"linknest/internal/store"
 	"linknest/internal/worker"
+	"linknest/web"
 )
 
 type App struct {
@@ -23,7 +24,7 @@ type App struct {
 func New(cfg config.Config, db *sql.DB) *App {
 	registry := metrics.New()
 	st := store.New(db)
-	tmpl := template.Must(template.ParseGlob("web/templates/*.html"))
+	tmpl := template.Must(template.ParseFS(web.Templates, "templates/*.html"))
 	return &App{
 		cfg:     cfg,
 		store:   st,

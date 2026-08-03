@@ -1,14 +1,15 @@
 services:
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-linknest}
-      POSTGRES_USER: ${POSTGRES_USER:-linknest}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-linknest}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-linknest}
+      MYSQL_USER: ${MYSQL_USER:-linknest}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-linknest}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,14 +22,14 @@ services:
       - .env
     environment:
       ADDR: ":8080"
-      DATABASE_URL: ${GO_DATABASE_URL:-postgres://linknest:linknest@postgres:5432/linknest?sslmode=disable}
+      DATABASE_URL: ${GO_DATABASE_URL:-mysql://linknest:linknest@mysql:3306/linknest}
       SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-change-me}
       DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-20}
       DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-10}
     ports:
       - "${HOST_PORT:-8081}:8080"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -39,4 +40,4 @@ services:
       start_period: 10s
 
 volumes:
-  postgres_data:
+  mysql_data:

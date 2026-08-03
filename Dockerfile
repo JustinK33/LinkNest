@@ -11,8 +11,6 @@ FROM alpine:3.23
 RUN adduser -D -H -u 10001 appuser
 WORKDIR /app
 COPY --from=build /out/linknest /app/linknest
-COPY migrations /app/migrations
-COPY web /app/web
 USER appuser
 EXPOSE 8080
 CMD ["/app/linknest"]

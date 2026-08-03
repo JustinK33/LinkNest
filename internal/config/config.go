@@ -18,7 +18,7 @@ type Config struct {
 func Load() Config {
 	return Config{
 		Addr:            env("ADDR", ":8080"),
-		DatabaseURL:     env("DATABASE_URL", "postgres://linknest:linknest@localhost:5432/linknest?sslmode=disable"),
+		DatabaseURL:     env("DATABASE_URL", "mysql://linknest:linknest@localhost:3306/linknest"),
 		SessionSecret:   env("SESSION_SECRET", "dev-session-secret-change-me"),
 		MaxOpenConns:    envInt("DB_MAX_OPEN_CONNS", 20),
 		MaxIdleConns:    envInt("DB_MAX_IDLE_CONNS", 10),
