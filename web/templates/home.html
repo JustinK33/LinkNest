@@ -1,39 +1,133 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LinkNest</title>
-  <link rel="stylesheet" href="/static/app.css">
-</head>
-<body>
-  <main class="shell">
-    <nav class="nav">
-      <a class="brand" href="/">LinkNest</a>
-      <div class="nav-actions">
-        {{if .User.ID}}
-          <a href="/dashboard">Dashboard</a>
-          <form method="post" action="/logout"><button>Sign out</button></form>
-        {{else}}
-          <a href="/login">Sign in</a>
-          <a class="button" href="/register">Create account</a>
-        {{end}}
+{{define "title"}}LinkNest - Your Links, Your Way{{end}}
+{{define "content"}}
+{{if .CurrentUser.ID}}
+  <section class="home-auth">
+    <div class="container-md home-auth-inner">
+      <p class="home-auth-kicker">Welcome back</p>
+      <h1>Everything is ready, {{.CurrentUser.FirstName}}.</h1>
+      <p class="home-auth-copy">Manage your links and publish updates in seconds.</p>
+      <div class="home-auth-actions">
+        <a href="/dashboard" class="btn btn-primary btn-lg">Open Dashboard</a>
+        <a href="/{{.CurrentUser.Slug}}" class="btn btn-secondary btn-lg">View Public Profile</a>
       </div>
-    </nav>
-    <section class="hero">
+    </div>
+  </section>
+{{else}}
+  <section class="landing-hero">
+    <div class="container-md landing-hero-inner">
+      <div class="landing-mark"><img src="/static/linknestlogo.png" alt="LinkNest logo" class="landing-logo-image"></div>
+      <p class="landing-kicker">Built for networking</p>
+      <h1>Tap, share, connect.</h1>
+      <p>Turn your profile into a fast digital business card. Perfect for conferences, coffee chats, portfolio reviews, and NFC tags.</p>
+      <div class="landing-pill-row" aria-label="Core benefits">
+        <span>NFC tag ready</span>
+        <span>One profile URL</span>
+        <span>Links, all in one place</span>
+      </div>
+      <div class="landing-hero-actions">
+        <a href="/register" class="btn btn-primary btn-lg">Build My Profile</a>
+        <a href="/login" class="btn btn-secondary btn-lg">Sign In</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-network-strip">
+    <div class="container landing-network-grid">
+      <article class="network-card">
+        <h3>At events</h3>
+        <p>Share your profile in seconds instead of spelling links out loud.</p>
+      </article>
+      <article class="network-card">
+        <h3>After meetings</h3>
+        <p>Keep your latest links in one place.</p>
+      </article>
+      <article class="network-card">
+        <h3>With NFC tags</h3>
+        <p>Program your tag once and instantly share your LinkNest profile.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="landing-feature-band">
+    <div class="container landing-feature-grid">
+      <div class="landing-feature-copy">
+        <h2>Your networking stack, simplified.</h2>
+        <div class="landing-feature-list">
+          <article>
+            <h3><span>&#9670;</span> Instant first impression</h3>
+            <p>Open to a polished profile page that highlights exactly what matters right now.</p>
+          </article>
+          <article>
+            <h3><span>&#9670;</span> NFC-friendly profile URL</h3>
+            <p>Use your public URL on cards, stickers, and NFC tags without changing your hardware setup.</p>
+          </article>
+          <article>
+            <h3><span>&#9670;</span> Keep it fresh</h3>
+            <p>Update links any time from your dashboard without reprinting anything.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="landing-phone-mock" aria-hidden="true">
+        <div class="landing-phone-brand">
+          <div class="landing-phone-logo"><img src="/static/linknestlogo.png" alt="LinkNest logo" class="phone-logo-image"></div>
+          <p class="phone-title">LinkNest Profile</p>
+          <p class="phone-subtitle">Ready to share anywhere</p>
+        </div>
+
+        <p class="phone-section-title">Networking essentials</p>
+        <ul class="landing-phone-list">
+          <li>Portfolio</li>
+          <li>LinkedIn</li>
+          <li>Email</li>
+          <li>Contact</li>
+        </ul>
+
+        <p class="phone-nfc-chip">NFC tap enabled</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-nfc-band">
+    <div class="container landing-nfc-grid">
       <div>
-        <h1>One profile for every important link.</h1>
-        <p>Publish a focused public page, track engagement, and understand which links are getting attention.</p>
-        <a class="button" href="/register">Start</a>
+        <p class="landing-kicker">NFC workflow</p>
+        <h2>From tag to connection in three steps.</h2>
+        <ol class="nfc-steps">
+          <li>Set your LinkNest public URL as your tag destination.</li>
+          <li>Tap the tag with any modern phone.</li>
+          <li>Your updated profile opens instantly with no app install.</li>
+        </ol>
       </div>
-      <div class="preview">
-        <div class="avatar"></div>
-        <strong>@linknest</strong>
-        <span>Portfolio</span>
-        <span>Resume</span>
-        <span>Contact</span>
+      <div class="nfc-tag-card" aria-hidden="true">
+        <p>NFC Profile Tag</p>
+        <strong>linknest.info/yourname</strong>
       </div>
-    </section>
-  </main>
-</body>
-</html>
+    </div>
+  </section>
+
+  <section class="landing-cta-slice">
+    <div class="container landing-cta-grid">
+      <div class="landing-cta-copy">
+        <h2>Look more prepared at every introduction.</h2>
+        <p>Create your networking profile once, then keep it current forever. Share it via URL or NFC tag.</p>
+        <a href="/register" class="btn btn-primary btn-lg">Create My LinkNest</a>
+      </div>
+
+      <div class="landing-card-stack" aria-hidden="true">
+        <div class="profile-card-back"></div>
+        <div class="profile-card-front">
+          <div class="card-avatar">LN</div>
+          <p class="card-name">Your Networking Card</p>
+          <p class="card-role">Founder, Designer, Engineer</p>
+          <div class="card-mini-actions">
+            <span>Portfolio</span>
+            <span>Resume</span>
+            <span>Contact</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{{end}}
+{{end}}

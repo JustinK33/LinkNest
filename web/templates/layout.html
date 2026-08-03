@@ -1,0 +1,39 @@
+{{define "layout"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="LinkNest">
+  <title>{{block "title" .}}LinkNest - Your Links, Your Way{{end}}</title>
+  <link rel="icon" href="/static/linknestlogo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/static/linknestlogo.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-brand">
+        <span class="navbar-brand-mark"><img src="/static/linknestlogo.png" alt="LinkNest logo" class="brand-logo-image"></span>
+        <span class="navbar-brand-text">LinkNest</span>
+      </a>
+      <div class="navbar-links">
+        {{if .CurrentUser.ID}}
+          <a href="/dashboard">Dashboard</a>
+          <a href="/{{.CurrentUser.Slug}}">Profile</a>
+          <form method="post" action="/logout" style="display:inline"><button type="submit" class="btn btn-sm btn-secondary">Log out</button></form>
+        {{else}}
+          <a href="/login" class="btn btn-sm btn-secondary">Sign in</a>
+          <a href="/register" class="btn btn-sm btn-primary">Register</a>
+        {{end}}
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    {{template "content" .}}
+  </main>
+</body>
+</html>
+{{end}}

@@ -1,30 +1,60 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.User.Username}} - LinkNest</title>
-  <link rel="stylesheet" href="/static/app.css">
-</head>
-<body>
-  <main class="profile">
-    <div class="avatar" style="background: {{.User.ProfileColor}}"></div>
-    <h1>{{.User.FirstName}} {{.User.LastName}}</h1>
-    <p>{{.User.Bio}}</p>
-    <div class="link-stack">
-      {{range .Links}}
-        <a class="public-link" href="{{.URL}}" data-link-id="{{.ID}}">{{.Title}}</a>
-      {{else}}
-        <p class="muted">No public links yet.</p>
-      {{end}}
+{{define "title"}}{{.Data.User.FirstName}} {{.Data.User.LastName}} (@{{.Data.User.Slug}}) - LinkNest{{end}}
+{{define "content"}}
+<div class="container-sm" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <div class="card">
+    <div class="profile-card">
+      <div class="profile-avatar" style="background-color: {{.Data.User.ProfileColor}}; color: white;">
+        {{initials .Data.User.FirstName .Data.User.LastName}}
+      </div>
+
+      <div class="profile-info">
+        <div class="profile-name">{{.Data.User.FirstName}} {{.Data.User.LastName}}</div>
+        <div class="profile-username">@{{.Data.User.Slug}}</div>
+        <h3 style="margin-bottom: 0.5rem;">About me</h3>
+        {{if .Data.User.Bio}}
+          <div class="profile-bio">{{.Data.User.Bio}}</div>
+        {{else}}
+          <div class="profile-bio" style="color: var(--color-gray-400); font-style: italic;">
+            This user hasn't added an About me yet.
+          </div>
+        {{end}}
+      </div>
     </div>
-  </main>
-  <script>
-    document.querySelectorAll("[data-link-id]").forEach(function(link) {
-      link.addEventListener("click", function() {
-        navigator.sendBeacon("/links/" + link.dataset.linkId + "/track_click");
-      });
+  </div>
+
+  {{if .Data.Links}}
+    <div style="margin-top: 2rem;">
+      <ul class="public-links-list">
+        {{range .Data.Links}}
+          <li>
+            <a href="{{.URL}}" class="public-link-card" data-link-id="{{.ID}}">
+              <h3 class="public-link-title">{{.Title}}</h3>
+            </a>
+          </li>
+        {{end}}
+      </ul>
+    </div>
+  {{else}}
+    <div class="card" style="margin-top: 2rem;">
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128279;</div>
+        <h3>No links yet</h3>
+        <p>@{{.Data.User.Slug}} hasn't shared any links yet</p>
+      </div>
+    </div>
+  {{end}}
+
+  <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--color-gray-200);">
+    <p style="color: var(--color-gray-500); font-size: 0.875rem;">
+      Powered by <a href="/">LinkNest</a>
+    </p>
+  </div>
+</div>
+<script>
+  document.querySelectorAll("[data-link-id]").forEach(function(link) {
+    link.addEventListener("click", function() {
+      navigator.sendBeacon("/links/" + link.dataset.linkId + "/track_click");
     });
-  </script>
-</body>
-</html>
+  });
+</script>
+{{end}}

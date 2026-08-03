@@ -1,74 +1,182 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard - LinkNest</title>
-  <link rel="stylesheet" href="/static/app.css">
-</head>
-<body>
-  <main class="shell">
-    <nav class="nav">
-      <a class="brand" href="/">LinkNest</a>
-      <div class="nav-actions">
-        <a href="/{{.User.Slug}}">Public profile</a>
-        <form method="post" action="/logout"><button>Sign out</button></form>
+{{define "title"}}Dashboard - LinkNest{{end}}
+{{define "content"}}
+<div class="dashboard-editor">
+  <div class="dashboard-workspace-tabs" role="tablist" aria-label="Editor tabs">
+    <button type="button" class="workspace-tab is-active" data-tab="profile" role="tab" aria-selected="true">&#128100; Profile</button>
+    <button type="button" class="workspace-tab" data-tab="links" role="tab" aria-selected="false">&#128279; Links</button>
+    <button type="button" class="workspace-tab" data-tab="analytics" role="tab" aria-selected="false">&#128202; Analytics</button>
+  </div>
+
+  <div class="dashboard-editor-shell container-md">
+    <section class="workspace-panel is-active" data-panel="profile">
+      <div class="dashboard-profile-header">
+        <div class="dashboard-profile-avatar" style="background-color: {{.Data.User.ProfileColor}}; color: white;">
+          {{initials .Data.User.FirstName .Data.User.LastName}}
+        </div>
+        <h1 class="dashboard-profile-name">{{.Data.User.Username}}</h1>
+        <p class="dashboard-profile-url"><a href="/{{.Data.User.Slug}}">/{{.Data.User.Slug}}</a></p>
       </div>
-    </nav>
-    <section class="grid">
-      <article class="panel">
-        <h1>{{.User.Username}}</h1>
-        <p class="muted">/{{.User.Slug}}</p>
-        <form method="post" action="/profile" class="stack">
-          <input name="first_name" value="{{.User.FirstName}}" required>
-          <input name="last_name" value="{{.User.LastName}}" required>
-          <textarea name="bio" rows="4" placeholder="Bio">{{.User.Bio}}</textarea>
-          <button class="button">Save profile</button>
+
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>General info</h2>
+        </header>
+
+        <form method="post" action="/profile">
+          <div class="form-group">
+            <label for="first_name">First name</label>
+            <input id="first_name" name="first_name" type="text" value="{{.Data.User.FirstName}}" required>
+          </div>
+          <div class="form-group">
+            <label for="last_name">Last name</label>
+            <input id="last_name" name="last_name" type="text" value="{{.Data.User.LastName}}" required>
+          </div>
+          <div class="form-group">
+            <label for="bio">About me</label>
+            <textarea id="bio" name="bio" rows="4" placeholder="About me">{{.Data.User.Bio}}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Save profile</button>
         </form>
+
+        <p class="dashboard-status">&#9679; Profile is enabled</p>
       </article>
-      <article class="panel stats">
-        <h2>Analytics</h2>
-        <div><strong>{{.TotalClicks}}</strong><span>Total clicks</span></div>
-        <div><strong>{{.UniqueVisitors}}</strong><span>Unique visitors</span></div>
+
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Alias</h2>
+          <a href="/{{.Data.User.Slug}}" class="dashboard-icon-action" aria-label="Open public profile">&#8599;</a>
+        </header>
+        <p class="dashboard-alias"><a href="/{{.Data.User.Slug}}">@{{.Data.User.Slug}}</a></p>
       </article>
     </section>
-    <section class="grid">
-      <article class="panel">
-        <h2>Add link</h2>
-        <form method="post" action="/links" class="stack">
-          <input name="title" placeholder="Title" required>
-          <input name="url" placeholder="https://example.com" required>
-          <label class="check"><input type="checkbox" name="public" checked> Public</label>
-          <button class="button">Add link</button>
+
+    <section class="workspace-panel" data-panel="links" hidden>
+      <div class="dashboard-links-header">
+        <h2>Network</h2>
+      </div>
+
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Add link</h2>
+        </header>
+        <form method="post" action="/links">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input id="title" name="title" type="text" placeholder="Portfolio" required>
+          </div>
+          <div class="form-group">
+            <label for="url">URL</label>
+            <input id="url" name="url" type="url" placeholder="https://example.com" required>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" name="public" checked> Public</label>
+          </div>
+          <button type="submit" class="btn btn-primary">Add link</button>
         </form>
       </article>
-      <article class="panel">
-        <h2>Links</h2>
-        <div class="list">
-          {{range .Links}}
-            <div class="row">
-              <div><strong>{{.Title}}</strong><p>{{.URL}}</p></div>
-              <span>{{.ClickCount}} clicks</span>
-            </div>
-          {{else}}
-            <p class="muted">No links yet.</p>
+
+      {{if .Data.Links}}
+        <div class="dashboard-links-list">
+          {{range .Data.Links}}
+            <article class="dashboard-link-card">
+              <div class="dashboard-link-content">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <p class="dashboard-link-title">{{.Title}}</p>
+                  {{if not .Public}}
+                    <span style="font-size: 0.75rem; background: var(--color-gray-300); color: var(--color-gray-700); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 500;">Private</span>
+                  {{end}}
+                </div>
+                <p class="dashboard-link-url"><a href="{{.URL}}">{{.URL}}</a></p>
+              </div>
+              <div class="dashboard-link-actions">
+                <span class="dashboard-value" style="font-size: 0.9rem;">{{.ClickCount}} clicks</span>
+              </div>
+            </article>
           {{end}}
         </div>
+      {{else}}
+        <article class="dashboard-card empty">
+          <h3>No links yet</h3>
+          <p>Add your first link to start building your profile.</p>
+        </article>
+      {{end}}
+    </section>
+
+    <section class="workspace-panel" data-panel="analytics" hidden>
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Overview</h2>
+        </header>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <div class="analytics-value">{{.Data.TotalClicks}}</div>
+            <div class="analytics-label">Total clicks</div>
+          </div>
+          <div class="analytics-card">
+            <div class="analytics-value">{{.Data.UniqueVisitors}}</div>
+            <div class="analytics-label">Unique visitors</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Top links</h2>
+        </header>
+        {{if .Data.TopLinks}}
+          <table class="analytics-table">
+            <thead><tr><th>Title</th><th>Clicks</th></tr></thead>
+            <tbody>
+              {{range .Data.TopLinks}}
+                <tr><td>{{.Title}}</td><td>{{.ClickCount}}</td></tr>
+              {{end}}
+            </tbody>
+          </table>
+        {{else}}
+          <p class="dashboard-muted">No clicks yet.</p>
+        {{end}}
+      </article>
+
+      <article class="dashboard-card">
+        <header class="dashboard-card-header">
+          <h2>Daily rollups</h2>
+        </header>
+        {{if .Data.Daily}}
+          <table class="analytics-table">
+            <thead><tr><th>Date</th><th>Clicks</th><th>Visitors</th></tr></thead>
+            <tbody>
+              {{range .Data.Daily}}
+                <tr><td>{{.Date.Format "2006-01-02"}}</td><td>{{.TotalClicks}}</td><td>{{.UniqueVisitors}}</td></tr>
+              {{end}}
+            </tbody>
+          </table>
+        {{else}}
+          <p class="dashboard-muted">Rollups appear after the daily worker runs.</p>
+        {{end}}
       </article>
     </section>
-    <section class="panel">
-      <h2>Daily rollups</h2>
-      <div class="list">
-        {{range .Daily}}
-          <div class="row">
-            <span>{{.Date.Format "2006-01-02"}}</span>
-            <span>{{.TotalClicks}} clicks - {{.UniqueVisitors}} visitors</span>
-          </div>
-        {{else}}
-          <p class="muted">Rollups appear after the daily worker runs.</p>
-        {{end}}
-      </div>
-    </section>
-  </main>
-</body>
-</html>
+  </div>
+</div>
+<script>
+  (function () {
+    var root = document.querySelector(".dashboard-editor");
+    if (!root) return;
+    var tabs = Array.prototype.slice.call(root.querySelectorAll(".workspace-tab"));
+    var panels = Array.prototype.slice.call(root.querySelectorAll(".workspace-panel"));
+    root.querySelector(".dashboard-workspace-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest(".workspace-tab");
+      if (!tab) return;
+      var name = tab.dataset.tab;
+      tabs.forEach(function (item) {
+        item.classList.toggle("is-active", item === tab);
+        item.setAttribute("aria-selected", String(item === tab));
+      });
+      panels.forEach(function (panel) {
+        var isTarget = panel.dataset.panel === name;
+        panel.classList.toggle("is-active", isTarget);
+        panel.hidden = !isTarget;
+      });
+    });
+  })();
+</script>
+{{end}}

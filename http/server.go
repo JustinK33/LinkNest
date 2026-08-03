@@ -22,11 +22,11 @@ type Server struct {
 	cfg     config.Config
 	store   *store.Store
 	metrics *metrics.Registry
-	tmpl    *template.Template
+	pages   map[string]*template.Template
 }
 
-func New(cfg config.Config, st *store.Store, registry *metrics.Registry, tmpl *template.Template) *Server {
-	return &Server{cfg: cfg, store: st, metrics: registry, tmpl: tmpl}
+func New(cfg config.Config, st *store.Store, registry *metrics.Registry, pages map[string]*template.Template) *Server {
+	return &Server{cfg: cfg, store: st, metrics: registry, pages: pages}
 }
 
 func (s *Server) Routes() http.Handler {
@@ -69,12 +69,11 @@ func (s *Server) up(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
-	user, _ := s.currentUser(r)
-	s.render(w, "home.html", map[string]any{"User": user})
+	s.render(w, r, "home.html", nil)
 }
 
-func (s *Server) registerForm(w http.ResponseWriter, _ *http.Request) {
-	s.render(w, "register.html", nil)
+func (s *Server) registerForm(w http.ResponseWriter, r *http.Request) {
+	s.render(w, r, "register.html", map[string]any{})
 }
 
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +83,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := s.store.CreateUser(r.Context(), r.FormValue("email"), r.FormValue("password"), r.FormValue("username"), r.FormValue("first_name"), r.FormValue("last_name"))
 	if err != nil {
-		s.render(w, "register.html", map[string]any{"Error": err.Error()})
+		s.render(w, r, "register.html", map[string]any{"Error": err.Error()})
 		return
 	}
 	sessionID, err := s.store.CreateSession(r.Context(), user.ID, clientIP(r), r.UserAgent())
@@ -96,8 +95,8 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
-func (s *Server) loginForm(w http.ResponseWriter, _ *http.Request) {
-	s.render(w, "login.html", nil)
+func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
+	s.render(w, r, "login.html", map[string]any{})
 }
 
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +106,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := s.store.Authenticate(r.Context(), r.FormValue("email"), r.FormValue("password"))
 	if err != nil {
-		s.render(w, "login.html", map[string]any{"Error": "Try another email or password."})
+		s.render(w, r, "login.html", map[string]any{"Error": "Try another email or password."})
 		return
 	}
 	sessionID, err := s.store.CreateSession(r.Context(), user.ID, clientIP(r), r.UserAgent())
@@ -135,7 +134,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request, user models.U
 		http.Error(w, "dashboard error", http.StatusInternalServerError)
 		return
 	}
-	s.render(w, "dashboard.html", dashboard)
+	s.render(w, r, "dashboard.html", dashboard)
 }
 
 func (s *Server) updateProfile(w http.ResponseWriter, r *http.Request, user models.User) {
@@ -219,7 +218,7 @@ func (s *Server) publicProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "profile error", http.StatusInternalServerError)
 		return
 	}
-	s.render(w, "profile.html", map[string]any{"User": user, "Links": links})
+	s.render(w, r, "profile.html", map[string]any{"User": user, "Links": links})
 }
 
 func (s *Server) apiEvents(w http.ResponseWriter, r *http.Request, user models.User) {
@@ -266,9 +265,14 @@ func (s *Server) requireAuth(next func(http.ResponseWriter, *http.Request, model
 	}
 }
 
-func (s *Server) render(w http.ResponseWriter, name string, data any) {
+func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, data any) {
+	user, _ := s.currentUser(r)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.tmpl.ExecuteTemplate(w, name, data); err != nil {
+	page := struct {
+		CurrentUser models.User
+		Data        any
+	}{CurrentUser: user, Data: data}
+	if err := s.pages[name].ExecuteTemplate(w, "layout", page); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
