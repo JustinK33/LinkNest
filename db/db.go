@@ -30,7 +30,9 @@ func Open(cfg config.Config) (*sql.DB, error) {
 	pool.SetMaxIdleConns(cfg.MaxIdleConns)
 	pool.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// TiDB Cloud Serverless auto-pauses when idle; waking it on a cold
+	// connection can take several seconds longer than a warm ping.
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	if err := pool.PingContext(ctx); err != nil {
 		_ = pool.Close()

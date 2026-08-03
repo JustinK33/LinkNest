@@ -15,34 +15,41 @@ import (
 )
 
 var (
-	once     sync.Once
-	routes   http.Handler
-	setupErr error
+	mu     sync.Mutex
+	routes http.Handler
 )
 
-func setup() {
+// ensureRoutes lazily connects and migrates on first use, retrying on every
+// call until it succeeds. TiDB Cloud Serverless auto-pauses when idle, so an
+// early attempt can time out waking it back up; unlike sync.Once, a failure
+// here doesn't permanently wedge this warm container.
+func ensureRoutes() (http.Handler, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	if routes != nil {
+		return routes, nil
+	}
 	cfg := config.Load()
 	pool, err := db.Open(cfg)
 	if err != nil {
-		setupErr = err
-		return
+		return nil, err
 	}
 	if err := db.Migrate(context.Background(), pool); err != nil {
-		setupErr = err
-		return
+		return nil, err
 	}
 	routes = app.New(cfg, pool).Routes()
+	return routes, nil
 }
 
 // Handler is the Vercel Go runtime entrypoint (github.com/vercel/vercel/blob/main/DEVELOPING_A_RUNTIME.md).
 // Background workers (hourly/daily rollups) don't run here - serverless
 // functions aren't long-lived enough for a ticker. Run cmd/linknest for that.
 func Handler(w http.ResponseWriter, r *http.Request) {
-	once.Do(setup)
-	if setupErr != nil {
-		log.Printf("startup failed: %v", setupErr)
+	h, err := ensureRoutes()
+	if err != nil {
+		log.Printf("startup failed: %v", err)
 		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	routes.ServeHTTP(w, r)
+	h.ServeHTTP(w, r)
 }
