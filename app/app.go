@@ -23,7 +23,9 @@ type App struct {
 	pages   map[string]*template.Template
 }
 
-var funcs = template.FuncMap{
+// Funcs are the template helpers every page is parsed with. Exported so dev
+// tooling renders pages exactly the way the server does.
+var Funcs = template.FuncMap{
 	"initials": func(first, last string) string {
 		var b strings.Builder
 		if first != "" {
@@ -48,17 +50,17 @@ var funcs = template.FuncMap{
 	},
 }
 
-// pageNames lists every standalone page template. Each is parsed together
+// PageNames lists every standalone page template. Each is parsed together
 // with layout.html into its own *template.Template so their "content"
 // blocks don't collide with one another.
-var pageNames = []string{"home.html", "login.html", "register.html", "dashboard.html", "profile.html", "error.html"}
+var PageNames = []string{"home.html", "login.html", "register.html", "dashboard.html", "profile.html", "error.html"}
 
 func New(cfg config.Config, db *sql.DB) *App {
 	registry := metrics.New()
 	st := store.New(db)
-	pages := make(map[string]*template.Template, len(pageNames))
-	for _, name := range pageNames {
-		pages[name] = template.Must(template.New(name).Funcs(funcs).ParseFS(web.Templates, "templates/layout.html", "templates/"+name))
+	pages := make(map[string]*template.Template, len(PageNames))
+	for _, name := range PageNames {
+		pages[name] = template.Must(template.New(name).Funcs(Funcs).ParseFS(web.Templates, "templates/layout.html", "templates/"+name))
 	}
 	return &App{
 		cfg:     cfg,
