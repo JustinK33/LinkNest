@@ -1,20 +1,33 @@
 {{define "title"}}{{.Data.User.FirstName}} {{.Data.User.LastName}} (@{{.Data.User.Slug}}) - LinkNest{{end}}
+{{define "meta"}}
+{{$name := printf "%s %s" .Data.User.FirstName .Data.User.LastName}}
+{{$desc := .Data.User.Bio}}
+{{if not $desc}}{{$desc = printf "See every link %s is sharing on LinkNest." $name}}{{end}}
+<meta name="description" content="{{$desc}}">
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="LinkNest">
+<meta property="og:title" content="{{$name}} (@{{.Data.User.Slug}})">
+<meta property="og:description" content="{{$desc}}">
+<meta property="og:url" content="{{.SiteURL}}/{{.Data.User.Slug}}">
+<meta property="og:image" content="{{.SiteURL}}/static/linknestlogo.png">
+<meta name="twitter:card" content="summary">
+{{end}}
 {{define "content"}}
-<div class="container-sm" style="padding-top: 2rem; padding-bottom: 4rem;">
+<div class="container-sm public-profile">
   <div class="card">
     <div class="profile-card">
-      <div class="profile-avatar" style="background-color: {{.Data.User.ProfileColor}}; color: white;">
+      <div class="profile-avatar profile-avatar-colored" style="background-color: {{.Data.User.ProfileColor}}">
         {{initials .Data.User.FirstName .Data.User.LastName}}
       </div>
 
       <div class="profile-info">
         <div class="profile-name">{{.Data.User.FirstName}} {{.Data.User.LastName}}</div>
         <div class="profile-username">@{{.Data.User.Slug}}</div>
-        <h3 style="margin-bottom: 0.5rem;">About me</h3>
+        <h3 class="profile-section-heading">About me</h3>
         {{if .Data.User.Bio}}
           <div class="profile-bio">{{.Data.User.Bio}}</div>
         {{else}}
-          <div class="profile-bio" style="color: var(--color-gray-400); font-style: italic;">
+          <div class="profile-bio is-empty">
             This user hasn't added an About me yet.
           </div>
         {{end}}
@@ -23,19 +36,18 @@
   </div>
 
   {{if .Data.Links}}
-    <div style="margin-top: 2rem;">
-      <ul class="public-links-list">
-        {{range .Data.Links}}
-          <li>
-            <a href="{{.URL}}" class="public-link-card" data-link-id="{{.ID}}">
-              <h3 class="public-link-title">{{.Title}}</h3>
-            </a>
-          </li>
-        {{end}}
-      </ul>
-    </div>
+    <ul class="public-links-list">
+      {{range .Data.Links}}
+        <li>
+          <a href="{{.URL}}" class="public-link-card" data-link-id="{{.ID}}" target="_blank" rel="noopener">
+            <h3 class="public-link-title">{{.Title}}</h3>
+            {{with host .URL}}<span class="public-link-host">{{.}}</span>{{end}}
+          </a>
+        </li>
+      {{end}}
+    </ul>
   {{else}}
-    <div class="card" style="margin-top: 2rem;">
+    <div class="card public-profile-empty">
       <div class="empty-state">
         <div class="empty-state-icon">&#128279;</div>
         <h3>No links yet</h3>
@@ -44,10 +56,8 @@
     </div>
   {{end}}
 
-  <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--color-gray-200);">
-    <p style="color: var(--color-gray-500); font-size: 0.875rem;">
-      Powered by <a href="/">LinkNest</a>
-    </p>
+  <div class="public-profile-footer">
+    <p>Powered by <a href="/">LinkNest</a></p>
   </div>
 </div>
 <script>

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"linknest/config"
@@ -36,6 +37,15 @@ var funcs = template.FuncMap{
 	// sub exists because text/template has no arithmetic, and the dashboard needs
 	// to know which link is last so it can disable its "move down" arrow.
 	"sub": func(a, b int) int { return a - b },
+	// host renders the destination domain under a public link, so a visitor can
+	// see where a link goes before tapping it.
+	"host": func(raw string) string {
+		parsed, err := url.Parse(raw)
+		if err != nil || parsed.Host == "" {
+			return ""
+		}
+		return strings.TrimPrefix(parsed.Host, "www.")
+	},
 }
 
 // pageNames lists every standalone page template. Each is parsed together

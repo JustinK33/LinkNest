@@ -8,6 +8,16 @@
   <meta name="application-name" content="LinkNest">
   <meta name="theme-color" content="#56738c">
   <title>{{block "title" .}}LinkNest - Your Links, Your Way{{end}}</title>
+  {{block "meta" .}}
+  <meta name="description" content="One tappable page for every link that matters. Share your profile, portfolio and socials from a single LinkNest address.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LinkNest">
+  <meta property="og:title" content="LinkNest - Your Links, Your Way">
+  <meta property="og:description" content="One tappable page for every link that matters.">
+  <meta property="og:url" content="{{.SiteURL}}/">
+  <meta property="og:image" content="{{.SiteURL}}/static/linknestlogo.png">
+  <meta name="twitter:card" content="summary">
+  {{end}}
   <link rel="icon" href="/static/icon-64.png" type="image/png">
   <link rel="apple-touch-icon" href="/static/icon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
