@@ -8,13 +8,35 @@
   /* Colors - Refined palette */
   --color-primary: #56738c;
   --color-primary-dark: #3f4d5c;
-  --color-primary-light: #7a8fa3;
   --color-primary-subtle: rgba(86, 115, 140, 0.12);
   --color-success: #10b981;
   --color-success-subtle: rgba(16, 185, 129, 0.12);
   --color-danger: #ef4444;
+  --color-danger-dark: #dc2626;
   --color-danger-subtle: rgba(239, 68, 68, 0.12);
   --color-warning: #f59e0b;
+
+  /* The landing page was written against a cool slate/blue scale in literal hexes
+     rather than the app's warm grays. Tokenised so the dark scheme has one place to
+     override, and near-duplicates (three almost identical pale blues, two pale
+     neutrals) collapsed into one token each. The --accent-* pair is the readable
+     text weight of success/danger; --color-success and --color-danger are tuned to
+     carry a white label as a fill and are too heavy for type. */
+  --ink-strong: #0f172a;
+  --ink: #334155;
+  --ink-soft: #475569;
+  --surface-muted: #f8fafc;
+  --surface-info: #eff6ff;
+  --border-info: #bfdbfe;
+  --accent-info: #1d4ed8;
+  --accent-info-strong: #1e3a8a;
+  --accent-success: #059669;
+  --accent-danger: #b91c1c;
+
+  /* Deliberately dark in both schemes: the two landing bands that invert against
+     the page. Everything inside them is "color: white", which only stays legible
+     if the band itself never flips with the gray ramp. */
+  --surface-inverted: #18181b;
 
   /* Grays - Warmer, more refined */
   --color-gray-50: #fafafa;
@@ -35,6 +57,12 @@
   --bg-card: #ffffff;
   --bg-glass: rgba(255, 255, 255, 0.7);
   --bg-glass-hover: rgba(255, 255, 255, 0.85);
+  /* The glass navbar's own edge, and the near-invisible border that gives cards
+     definition without a visible line. Both are tinted from the page, not fixed. */
+  --border-glass: rgba(255, 255, 255, 0.5);
+  --border-hairline: rgba(0, 0, 0, 0.04);
+  /* Transparent in light: the mark's darkest blue already reads on a pale page. */
+  --logo-plate: transparent;
 
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #56738c 0%, #3f4d5c 100%);
@@ -53,6 +81,7 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
+  --space-14: 3.5rem;
   --space-16: 4rem;
 
   /* Border radius - More refined */
@@ -90,8 +119,83 @@
   --z-tooltip: 40;
 }
 
-/* Import Google Font */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Dark scheme. Follows the OS only: a toggle needs JS, a storage read and a
+   guard against the flash of wrong theme, none of which buys anything over the
+   setting the user already made once.
+
+   It is short because the gray ramp inverts. --color-gray-50 stays "the faintest
+   fill" and --color-gray-900 stays "the strongest text", so the several hundred
+   existing declarations that name them keep meaning what they meant. Only tokens
+   that encode a *light* surface rather than a position on the ramp need values
+   here, plus the two bands pinned dark in :root, which are already correct. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Makes form controls, scrollbars and the caret follow suit. */
+    color-scheme: dark;
+
+    /* Lifted: #56738c on a near-black page is 3.8:1, under the 4.5:1 floor for
+       the links and labels that use it as a text colour. */
+    --color-primary: #7d9bb5;
+    --color-primary-subtle: rgba(125, 155, 181, 0.16);
+
+    /* success, danger and warning are unchanged. They are used both as text on
+       the page and as a fill under white labels, and the light-scheme values are
+       the ones that satisfy both. */
+
+    --ink-strong: #f4f4f5;
+    --ink: #c7ccd4;
+    --ink-soft: #a2a9b4;
+    --surface-muted: #1c1c20;
+    --surface-info: #17212f;
+    --border-info: #2c405c;
+    --accent-info: #93b4ee;
+    --accent-info-strong: #c3d6f6;
+    --accent-success: #34d399;
+    --accent-danger: #f87171;
+
+    --color-gray-50: #202024;
+    --color-gray-100: #26262b;
+    --color-gray-200: #33333a;
+    --color-gray-300: #45454e;
+    --color-gray-400: #71717a;
+    --color-gray-500: #8e8e99;
+    --color-gray-600: #a9a9b3;
+    --color-gray-700: #c6c6cd;
+    --color-gray-800: #e2e2e6;
+    --color-gray-900: #f7f7f8;
+    --color-surface: #17171a;
+    --color-border-soft: #33333a;
+
+    --bg-primary: #101013;
+    --bg-card: #17171a;
+    --bg-glass: rgba(23, 23, 26, 0.72);
+    --bg-glass-hover: rgba(30, 30, 34, 0.88);
+    --border-glass: rgba(255, 255, 255, 0.08);
+    --border-hairline: rgba(255, 255, 255, 0.06);
+    --logo-plate: #e8eaee;
+
+    /* Kept dark, not lifted with --color-primary: every button and avatar filled
+       with this puts white text on it. */
+    --gradient-primary: linear-gradient(135deg, #4c6579 0%, #364453 100%);
+    --gradient-surface: linear-gradient(180deg, #1b1b1f 0%, #141417 100%);
+    --gradient-mesh: radial-gradient(ellipse at top left, rgba(125, 155, 181, 0.14), transparent 50%),
+                     radial-gradient(ellipse at top right, rgba(125, 155, 181, 0.1), transparent 50%),
+                     radial-gradient(ellipse at bottom, rgba(125, 155, 181, 0.07), transparent 40%);
+
+    /* A black shadow on a near-black page does nothing, so these are opaque
+       enough to still read as depth. */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    --shadow-glow: 0 0 40px rgba(125, 155, 181, 0.22);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Webfonts are linked from layout.html. Importing them here would delay the
+   fetch until this file has been parsed, and is silently dropped unless it
+   precedes every ruleset above. */
 
 /* ===== Base Styles ===== */
 * {
@@ -157,7 +261,7 @@ body {
 /* ===== Navbar ===== */
 .navbar {
   background: var(--bg-glass);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid var(--border-glass);
   padding: var(--space-3) 0;
   margin-bottom: var(--space-8);
   position: sticky;
@@ -197,9 +301,10 @@ body {
   width: 2.2rem;
   height: 2.2rem;
   border-radius: var(--radius-md);
+  padding: 3px;
   display: grid;
   place-items: center;
-  background: transparent;
+  background: var(--logo-plate);
   box-shadow: none;
 }
 
@@ -220,7 +325,10 @@ body {
   align-items: center;
 }
 
-.navbar-links a {
+/* Scoped with :not(.btn) so buttons in the navbar keep the button system's own
+   look. ".navbar-links a" outranks ".btn" on specificity, so without this the
+   nav flattened Sign in and Register into the same pill. */
+.navbar-links a:not(.btn) {
   color: var(--color-gray-600);
   text-decoration: none;
   font-weight: 500;
@@ -231,7 +339,7 @@ body {
   position: relative;
 }
 
-.navbar-links a::after {
+.navbar-links a:not(.btn)::after {
   content: '';
   position: absolute;
   bottom: 4px;
@@ -244,37 +352,11 @@ body {
   border-radius: var(--radius-full);
 }
 
-.navbar-links a:hover {
+.navbar-links a:not(.btn):hover {
   background: var(--color-primary-subtle);
 }
 
-/* Prevent generic link hover background from affecting buttons */
-.navbar-links .btn:hover {
-  background: white !important;
-}
-
-/* Button default and hover states in navbar */
-.navbar-links .btn-primary {
-  background: var(--color-primary);
-  color: white !important;
-}
-
-.navbar-links .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.navbar-links .btn-secondary {
-  background: var(--color-primary);
-  color: white !important;
-}
-
-.navbar-links .btn-secondary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.navbar-links a:hover::after {
+.navbar-links a:not(.btn):hover::after {
   width: calc(100% - 2rem);
 }
 
@@ -308,13 +390,13 @@ body {
 .flash.notice {
   background: var(--color-success-subtle);
   border-color: rgba(16, 185, 129, 0.3);
-  color: #047857;
+  color: var(--accent-success);
 }
 
 .flash.alert {
   background: var(--color-danger-subtle);
   border-color: rgba(239, 68, 68, 0.3);
-  color: #b91c1c;
+  color: var(--accent-danger);
 }
 
 /* ===== Typography ===== */
@@ -364,7 +446,7 @@ p {
   background: var(--bg-card);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-hairline);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
   transition: all var(--duration-normal) var(--ease-out-expo);
@@ -375,32 +457,12 @@ p {
   transform: translateY(-2px);
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-gray-100);
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-gray-900);
-  margin: 0;
-}
-
-.card-body {
-  margin-bottom: var(--space-4);
-}
-
 /* ===== Forms ===== */
 .form-container {
   background: var(--bg-card);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-hairline);
   padding: var(--space-8);
   max-width: 440px;
   margin: 0 auto;
@@ -471,7 +533,7 @@ input[type="file"]:hover,
 textarea:hover,
 select:hover {
   border-color: var(--color-gray-300);
-  background: white;
+  background: var(--bg-card);
 }
 
 input[type="text"]:focus,
@@ -484,7 +546,7 @@ select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 4px var(--color-primary-subtle);
-  background: white;
+  background: var(--bg-card);
 }
 
 textarea {
@@ -498,85 +560,6 @@ textarea {
   margin-top: var(--space-2);
 }
 
-/* ===== File Input Styling ===== */
-.file-input-wrapper {
-  position: relative;
-  display: block;
-  border: 2px dashed var(--color-gray-200);
-  border-radius: var(--radius-lg);
-  background: var(--color-gray-50);
-  padding: var(--space-8) var(--space-4);
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out-expo);
-  margin-bottom: var(--space-2);
-}
-
-.file-input-wrapper:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-subtle);
-}
-
-.file-input-wrapper input[type="file"] {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.file-input-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  color: var(--color-gray-600);
-  font-weight: 500;
-  pointer-events: none;
-  text-align: center;
-}
-
-.file-input-icon {
-  font-size: 2rem;
-}
-
-.file-input-text {
-  font-size: 0.95rem;
-}
-
-.link-action {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all var(--duration-normal) var(--ease-out-expo);
-}
-
-.link-action:hover {
-  color: var(--color-primary-dark);
-  text-decoration: underline;
-}
-
-.field_with_errors {
-  display: contents;
-}
-
-.field_with_errors input,
-.field_with_errors textarea,
-.field_with_errors select {
-  border-color: var(--color-danger);
-  background: var(--color-danger-subtle);
-}
-
-.field_with_errors .file-input-wrapper {
-  border-color: var(--color-danger);
-  background: var(--color-danger-subtle);
-}
-
 .error-messages {
   background: var(--color-danger-subtle);
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -586,7 +569,7 @@ textarea {
 }
 
 .error-messages h3 {
-  color: var(--color-danger);
+  color: var(--accent-danger);
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: var(--space-2);
@@ -598,7 +581,7 @@ textarea {
 }
 
 .error-messages li {
-  color: #b91c1c;
+  color: var(--accent-danger);
   font-size: 0.875rem;
   margin-bottom: var(--space-1);
 }
@@ -681,7 +664,7 @@ textarea {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--color-danger-dark);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
 }
@@ -701,53 +684,14 @@ textarea {
   display: block;
 }
 
-.btn-group {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.btn-group .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.btn-group .btn-secondary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.btn-google {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.625rem;
-  position: relative;
-  overflow: visible;
-}
-
-.btn-google svg {
-  flex-shrink: 0;
-}
-
-.btn-google-label {
-  font-weight: 600;
-}
-
-.auth-last-used-badge {
-  position: absolute;
-  right: 0.75rem;
-  top: -0.6rem;
-  background: linear-gradient(135deg, #dce8ff, #c6dbff);
-  color: #2f5aa8;
-  border: 1px solid #9fc0ff;
-  border-radius: 999px;
-  font-size: 0.66rem;
-  line-height: 1;
-  padding: 0.22rem 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  box-shadow: 0 3px 8px rgba(55, 104, 180, 0.2);
+/* Action rows invert their buttons on hover. This was the same two declarations
+   copy-pasted into five rules, each marked !important - which was never needed,
+   since a descendant selector plus :hover already outranks .btn-primary. */
+.home-auth-actions .btn:hover:not(:disabled),
+.landing-hero-actions .btn:hover:not(:disabled),
+.landing-cta-copy .btn:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-gray-900);
 }
 
 /* Focus styles for accessibility */
@@ -767,44 +711,9 @@ textarea {
   margin-bottom: 0;
 }
 
-.auth-footer-top {
-  margin-top: 1.4rem;
-}
-
-.auth-divider {
-  margin: 1rem 0;
-  text-align: center;
-  color: var(--color-gray-500);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .auth-footer-muted {
   margin-top: 0.6rem;
   color: var(--color-gray-600);
-}
-
-.oauth-setup-banner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding: 0.8rem 1rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid #9fc0ff;
-  background: linear-gradient(135deg, #eef4ff, #deebff);
-  color: #224a90;
-  box-shadow: 0 6px 16px rgba(63, 104, 173, 0.12);
-}
-
-.oauth-setup-banner strong {
-  font-size: 0.88rem;
-}
-
-.oauth-setup-banner span {
-  font-size: 0.84rem;
 }
 
 /* ===== Profile Card ===== */
@@ -872,92 +781,6 @@ textarea {
   margin-bottom: var(--space-4);
 }
 
-.profile-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-/* ===== Links List ===== */
-.links-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.link-item {
-  background: var(--bg-card);
-  border: 1px solid var(--color-gray-100);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
-  margin-bottom: var(--space-3);
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  transition: all var(--duration-normal) var(--ease-out-expo);
-}
-
-.link-item:hover {
-  border-color: var(--color-gray-200);
-  box-shadow: var(--shadow-md);
-  transform: translateX(4px);
-}
-
-.link-drag-handle {
-  color: var(--color-gray-300);
-  cursor: move;
-  font-size: 1.25rem;
-  transition: color var(--duration-normal) var(--ease-out-expo);
-}
-
-.link-item:hover .link-drag-handle {
-  color: var(--color-gray-400);
-}
-
-.link-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.link-title {
-  font-weight: 600;
-  color: var(--color-gray-900);
-  margin-bottom: var(--space-1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.link-url {
-  font-size: 0.875rem;
-  color: var(--color-gray-500);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.link-badge {
-  display: inline-block;
-  padding: var(--space-1) var(--space-2);
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: var(--radius-full);
-}
-
-.link-badge-visible {
-  background: var(--color-success-subtle);
-  color: #047857;
-}
-
-.link-badge-hidden {
-  background: var(--color-gray-100);
-  color: var(--color-gray-500);
-}
-
-.link-actions {
-  display: flex;
-  gap: var(--space-2);
-}
-
 /* ===== Public Link Cards ===== */
 .public-links-list {
   list-style: none;
@@ -1020,14 +843,6 @@ textarea {
 }
 
 /* Alternate styling without gradient overlay on hover */
-.public-link-card.plain:hover {
-  border-color: var(--color-primary);
-  background: white;
-}
-
-.public-link-card.plain:hover::before {
-  opacity: 0;
-}
 
 /* ===== Analytics Cards ===== */
 .analytics-grid {
@@ -1129,40 +944,6 @@ textarea {
   margin-right: auto;
 }
 
-/* ===== Utility Classes ===== */
-.text-center {
-  text-align: center;
-}
-
-.text-right {
-  text-align: right;
-}
-
-.mt-2 { margin-top: var(--space-2); }
-.mt-4 { margin-top: var(--space-4); }
-.mt-6 { margin-top: var(--space-6); }
-.mt-8 { margin-top: var(--space-8); }
-
-.mb-2 { margin-bottom: var(--space-2); }
-.mb-4 { margin-bottom: var(--space-4); }
-.mb-6 { margin-bottom: var(--space-6); }
-.mb-8 { margin-bottom: var(--space-8); }
-
-.flex {
-  display: flex;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.gap-2 { gap: var(--space-2); }
-.gap-4 { gap: var(--space-4); }
-
 /* ===== Dashboard Editor ===== */
 .dashboard-editor {
   min-height: calc(100vh - 80px);
@@ -1231,17 +1012,9 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-gray-500);
   font-size: 2rem;
   font-weight: 700;
   background: var(--color-gray-100);
-}
-
-.dashboard-profile-image {
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-xl);
-  object-fit: cover;
 }
 
 .dashboard-profile-name {
@@ -1285,33 +1058,13 @@ textarea {
   line-height: 1.2;
 }
 
-.dashboard-card-section {
-  margin-bottom: var(--space-5);
-}
-
-.dashboard-label {
-  margin-bottom: var(--space-1);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-gray-500);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dashboard-value {
-  margin: 0;
-  font-size: 1.5rem;
-  line-height: 1.3;
-  color: var(--color-gray-900);
-}
-
 .dashboard-muted {
   color: var(--color-gray-400);
 }
 
 .dashboard-status {
   margin: var(--space-4) 0 0;
-  color: #059669;
+  color: var(--accent-success);
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -1345,15 +1098,6 @@ textarea {
   color: var(--color-primary);
 }
 
-.dashboard-icon-action.danger {
-  color: var(--color-gray-400);
-}
-
-.dashboard-icon-action.danger:hover {
-  background: var(--color-danger-subtle);
-  color: var(--color-danger);
-}
-
 .dashboard-links-header {
   display: flex;
   align-items: center;
@@ -1377,11 +1121,10 @@ textarea {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
   padding: var(--space-4) var(--space-5);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
-  cursor: grab;
   transition: all var(--duration-normal) var(--ease-out-expo);
 }
 
@@ -1390,15 +1133,25 @@ textarea {
   border-color: var(--color-gray-200);
 }
 
-.dashboard-link-card.is-dragging {
-  opacity: 0.75;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-lg);
-  cursor: grabbing;
-}
-
 .dashboard-link-content {
   min-width: 0;
+}
+
+.dashboard-link-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badge-private {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .dashboard-link-title {
@@ -1420,24 +1173,104 @@ textarea {
 .dashboard-link-actions {
   display: flex;
   align-items: center;
+  gap: var(--space-3);
+}
+
+.dashboard-link-clicks {
+  color: var(--color-gray-500);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Reorder is two buttons rather than drag-and-drop: it works with a keyboard and
+   on touch, where HTML5 drag events are unreliable. Each is its own form, hence
+   the flex row to sit them together. */
+.link-move-group {
+  display: flex;
   gap: var(--space-1);
 }
 
-.dashboard-drag-hint {
-  color: var(--color-gray-300);
-  font-size: 1.2rem;
+.link-move {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--color-gray-600);
+  font-size: 0.7rem;
   line-height: 1;
-  margin-left: var(--space-1);
-  cursor: grab;
-  transition: color var(--duration-normal) var(--ease-out-expo);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
 }
 
-.dashboard-link-card:hover .dashboard-drag-hint {
-  color: var(--color-gray-400);
+.link-move:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-.dashboard-inline-form {
-  display: inline-flex;
+.link-move:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.link-move:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* flex-basis puts the editor on its own row under the title and the reorder
+   controls, instead of squeezing in beside them. */
+.link-edit {
+  grid-column: 1 / -1;
+}
+
+/* Styled as a control rather than left as bare text: a bottom-left "Edit" that
+   looks like a stray label doesn't read as something you can press. */
+.link-edit > summary {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  color: var(--color-gray-600);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+
+.link-edit > summary::marker,
+.link-edit > summary::-webkit-details-marker {
+  content: '';
+  display: none;
+}
+
+.link-edit > summary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.link-edit > summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.link-edit[open] > summary {
+  margin-bottom: var(--space-4);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.link-edit-form {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-gray-100);
+}
+
+.link-delete-form {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-gray-100);
 }
 
 .dashboard-card.empty h3 {
@@ -1451,7 +1284,7 @@ textarea {
 /* ===== Landing Page ===== */
 .home-auth {
   padding: var(--space-16) 0;
-  background: var(--gradient-mesh), linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  background: var(--gradient-mesh), linear-gradient(180deg, var(--bg-card) 0%, var(--color-gray-50) 100%);
 }
 
 .home-auth-inner {
@@ -1483,18 +1316,8 @@ textarea {
   flex-wrap: wrap;
 }
 
-.home-auth-actions .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.home-auth-actions .btn-secondary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
 .landing-hero {
-  background: var(--gradient-mesh), linear-gradient(180deg, #fafafa 0%, #f4f4f5 100%);
+  background: var(--gradient-mesh), linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-gray-100) 100%);
   padding: var(--space-16) 0 var(--space-12);
   position: relative;
   overflow: hidden;
@@ -1531,7 +1354,7 @@ textarea {
   margin: 0 auto var(--space-6);
   display: grid;
   place-items: center;
-  background: transparent;
+  background: var(--logo-plate);
   box-shadow: none;
 }
 
@@ -1559,7 +1382,7 @@ textarea {
 
 .landing-kicker {
   margin-bottom: var(--space-4);
-  color: #059669;
+  color: var(--accent-success);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -1577,7 +1400,7 @@ textarea {
 .landing-pill-row span {
   border: 1px solid rgba(86, 115, 140, 0.2);
   background: rgba(86, 115, 140, 0.08);
-  color: #0369a1;
+  color: var(--accent-info-strong);
   border-radius: var(--radius-full);
   padding: 0.5rem 1rem;
   font-weight: 600;
@@ -1591,19 +1414,9 @@ textarea {
   flex-wrap: wrap;
 }
 
-.landing-hero-actions .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.landing-hero-actions .btn-secondary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
 .landing-feature-band {
   padding: var(--space-16) 0;
-  background: var(--color-gray-900);
+  background: var(--surface-inverted);
   color: white;
   position: relative;
   overflow: hidden;
@@ -1618,7 +1431,7 @@ textarea {
 }
 
 .landing-network-strip {
-  background: var(--color-gray-900);
+  background: var(--surface-inverted);
   padding: var(--space-10) 0;
   position: relative;
 }
@@ -1666,10 +1479,10 @@ textarea {
 }
 
 .landing-phone-mock {
-  background: #f4f5f7;
+  background: var(--surface-muted);
   border-radius: 30px;
   padding: var(--space-6);
-  color: #0f172a;
+  color: var(--ink-strong);
   box-shadow: 0 20px 40px rgba(17, 24, 39, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
@@ -1682,9 +1495,9 @@ textarea {
 .landing-phone-logo {
   width: 96px;
   height: 96px;
-  border-radius: 0;
+  border-radius: var(--radius-md);
   margin: 0 auto var(--space-3);
-  background: transparent;
+  background: var(--logo-plate);
   display: grid;
   place-items: center;
   box-shadow: none;
@@ -1702,13 +1515,13 @@ textarea {
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: var(--space-1);
-  color: #0f172a;
+  color: var(--ink-strong);
 }
 
 .phone-subtitle {
   margin: 0;
   text-align: center;
-  color: #475569;
+  color: var(--ink-soft);
   font-size: 0.9rem;
 }
 
@@ -1716,7 +1529,7 @@ textarea {
   margin: var(--space-4) 0 var(--space-2);
   font-size: 0.95rem;
   font-weight: 700;
-  color: #334155;
+  color: var(--ink);
 }
 
 .landing-phone-list {
@@ -1727,12 +1540,12 @@ textarea {
 
 .landing-phone-list li {
   padding: var(--space-3);
-  border: 1px solid #d8dee7;
-  background: #ffffff;
+  border: 1px solid var(--color-gray-200);
+  background: var(--bg-card);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-2);
   font-weight: 500;
-  color: #334155;
+  color: var(--ink);
 }
 
 .phone-nfc-chip {
@@ -1740,9 +1553,9 @@ textarea {
   width: fit-content;
   padding: 0.4rem 0.85rem;
   border-radius: 999px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1e3a8a;
+  border: 1px solid var(--border-info);
+  background: var(--surface-info);
+  color: var(--accent-info-strong);
   font-weight: 700;
   font-size: 0.85rem;
 }
@@ -1775,7 +1588,9 @@ textarea {
   line-height: 1.15;
   display: flex;
   gap: var(--space-2);
-  align-items: center;
+  /* baseline, not center: center puts the bullet in the gutter between the two
+     lines of a heading that wraps. */
+  align-items: baseline;
 }
 
 .landing-feature-list h3 span {
@@ -1794,12 +1609,12 @@ textarea {
 }
 
 .landing-cta-slice {
-  background: #f8fafc;
+  background: var(--surface-muted);
   padding: var(--space-16) 0;
 }
 
 .landing-nfc-band {
-  background: linear-gradient(165deg, #f0f9ff 0%, #f8fafc 100%);
+  background: linear-gradient(165deg, var(--surface-info) 0%, var(--surface-muted) 100%);
   padding: var(--space-14) 0;
 }
 
@@ -1813,15 +1628,15 @@ textarea {
 .nfc-steps {
   margin: 0;
   padding-left: 1.2rem;
-  color: #0f172a;
+  color: var(--ink-strong);
   font-size: 1.06rem;
   line-height: 1.7;
 }
 
 .nfc-tag-card {
   border-radius: 18px;
-  border: 1px solid #bfdbfe;
-  background: linear-gradient(145deg, #ffffff, #eef6ff);
+  border: 1px solid var(--border-info);
+  background: linear-gradient(145deg, var(--bg-card), var(--surface-info));
   box-shadow: 0 14px 30px rgba(30, 64, 175, 0.12);
   padding: var(--space-6);
   text-align: center;
@@ -1829,12 +1644,12 @@ textarea {
 
 .nfc-tag-card p {
   margin: 0 0 var(--space-2);
-  color: #1d4ed8;
+  color: var(--accent-info);
   font-weight: 700;
 }
 
 .nfc-tag-card strong {
-  color: #0f172a;
+  color: var(--ink-strong);
   font-size: 1.05rem;
 }
 
@@ -1859,11 +1674,6 @@ textarea {
   color: var(--color-gray-700);
 }
 
-.landing-cta-copy .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
 .landing-card-stack {
   position: relative;
   min-height: 300px;
@@ -1876,7 +1686,7 @@ textarea {
   width: 78%;
   height: 260px;
   border-radius: 22px;
-  background: linear-gradient(145deg, #56738c, #3f4d5c);
+  background: var(--gradient-primary);
   box-shadow: 0 14px 24px rgba(63, 77, 92, 0.25);
 }
 
@@ -1885,8 +1695,8 @@ textarea {
   left: 0;
   top: 0;
   width: 78%;
-  background: white;
-  border: 1px solid #dbeafe;
+  background: var(--bg-card);
+  border: 1px solid var(--border-info);
   border-radius: 22px;
   padding: var(--space-5);
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.15);
@@ -1896,7 +1706,7 @@ textarea {
   width: 72px;
   height: 72px;
   border-radius: 999px;
-  background: linear-gradient(145deg, #56738c, #7a8fa3);
+  background: var(--gradient-primary);
   color: white;
   display: grid;
   place-items: center;
@@ -1907,13 +1717,13 @@ textarea {
 .card-name {
   margin: 0 0 var(--space-1);
   font-size: 1.2rem;
-  color: #0f172a;
+  color: var(--ink-strong);
   font-weight: 700;
 }
 
 .card-role {
   margin: 0 0 var(--space-4);
-  color: #475569;
+  color: var(--ink-soft);
   font-size: 0.95rem;
 }
 
@@ -1925,95 +1735,11 @@ textarea {
 
 .card-mini-actions span {
   border-radius: 999px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--border-info);
   padding: var(--space-1) var(--space-3);
-  color: #1e3a8a;
+  color: var(--accent-info-strong);
   font-weight: 600;
   font-size: 0.85rem;
-}
-
-/* ===== Link Entry Mode ===== */
-.entry-mode-actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.entry-mode-actions .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.entry-mode-actions .btn-secondary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.dashboard-links-cta-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.dashboard-links-cta-group .btn-primary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.dashboard-links-cta-group .btn-secondary:hover {
-  background: white !important;
-  color: var(--color-gray-700) !important;
-}
-
-.dashboard-file-actions {
-  margin-top: var(--space-2);
-  margin-bottom: 0;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.dashboard-file-actions span {
-  color: var(--color-gray-400);
-}
-
-/* ===== QR Code Styling ===== */
-.qr-code-container {
-  position: relative;
-  transition: all var(--duration-normal) var(--ease-out-expo);
-}
-
-.qr-code-container:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg) !important;
-}
-
-.qr-code-container::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  background: var(--gradient-primary);
-  border-radius: inherit;
-  z-index: -1;
-  opacity: 0;
-  transition: opacity var(--duration-normal) var(--ease-out-expo);
-}
-
-.qr-code-container:hover::before {
-  opacity: 0.1;
-}
-
-.qr-code-container img {
-  border-radius: var(--radius-md);
-  transition: transform var(--duration-normal) var(--ease-out-expo);
-}
-
-@media (max-width: 768px) {
-  .qr-code-container img {
-    width: 160px !important;
-    height: 160px !important;
-  }
 }
 
 /* ===== Responsive Design ===== */
@@ -2039,18 +1765,11 @@ textarea {
     text-align: center;
   }
 
-  .profile-actions {
-    justify-content: center;
-  }
+  
 
-  .link-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  
 
-  .link-actions {
-    justify-content: center;
-  }
+  
 
   .analytics-grid {
     grid-template-columns: 1fr;
@@ -2106,21 +1825,21 @@ textarea {
     font-size: 1.25rem;
   }
 
-  .dashboard-value {
-    font-size: 1.25rem;
-  }
+  
 
   .dashboard-alias {
     font-size: 1.375rem;
   }
 
+  /* One column: the click count and the reorder arrows get their own row under
+     the title rather than squeezing a wrapping URL into ~140px. */
   .dashboard-link-card {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .dashboard-link-actions {
-    align-self: flex-end;
+    justify-self: end;
   }
 
   .dashboard-link-title,
@@ -2128,10 +1847,7 @@ textarea {
     font-size: 1rem;
   }
 
-  .dashboard-links-cta-group {
-    width: 100%;
-    justify-content: flex-end;
-  }
+  
 
   .landing-hero {
     padding-top: var(--space-12);
@@ -2204,7 +1920,6 @@ textarea {
 @media (hover: none) and (pointer: coarse) {
   .btn:hover,
   .card:hover,
-  .link-item:hover,
   .dashboard-link-card:hover,
   .network-card:hover {
     transform: none;
@@ -2248,78 +1963,84 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-/* ===== Contact Fields Styling ===== */
-.contact-fields-section {
-  background: linear-gradient(135deg, rgba(86, 115, 140, 0.02), rgba(86, 115, 140, 0.05));
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  border: 1px solid rgba(86, 115, 140, 0.08);
+/* ===== Public Profile ===== */
+.public-profile {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-16);
 }
 
-.contact-field-input {
-  position: relative;
-  transition: all var(--duration-normal) var(--ease-out-expo);
+.public-profile .public-links-list,
+.public-profile-empty {
+  margin-top: var(--space-8);
 }
 
-.contact-field-input:focus-within {
-  transform: translateY(-1px);
+.profile-section-heading {
+  margin-bottom: var(--space-2);
 }
 
-.contact-field-input input[type="email"],
-.contact-field-input input[type="tel"] {
-  transition: all var(--duration-normal) var(--ease-out-expo);
-  border: 2px solid var(--color-gray-200);
-  border-radius: var(--radius-md);
-  background: white;
+.profile-bio.is-empty {
+  color: var(--color-gray-400);
+  font-style: italic;
 }
 
-.contact-field-input input[type="email"]:focus,
-.contact-field-input input[type="tel"]:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(86, 115, 140, 0.1);
-  background: rgba(86, 115, 140, 0.02);
+/* The avatar fill is set inline from the user's profile_color, so it does not
+   follow the scheme. Its initials have to be a fixed light rather than the page
+   surface: --bg-card turned them near-black on a mid-slate avatar in dark. */
+.profile-avatar-colored,
+.dashboard-profile-avatar {
+  color: white;
 }
 
-.contact-field-input input[type="email"]:hover:not(:focus),
-.contact-field-input input[type="tel"]:hover:not(:focus) {
-  border-color: var(--color-gray-300);
-  background: var(--color-gray-50);
-}
-
-.contact-field-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--color-gray-700);
+.public-link-host {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
   transition: color var(--duration-normal) var(--ease-out-expo);
 }
 
-.contact-field-icon {
-  font-size: 1.1rem;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+.public-link-card:hover .public-link-host {
+  color: rgba(255, 255, 255, 0.75);
 }
 
-.contact-hint {
-  margin-top: 0.4rem;
-  font-size: 0.85rem;
+.public-profile-footer {
+  text-align: center;
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.public-profile-footer p {
+  color: var(--color-gray-500);
+  font-size: 0.875rem;
+}
+
+/* ===== Error Page ===== */
+.error-page {
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+}
+
+.error-page-status {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--color-gray-400);
+  margin-bottom: var(--space-2);
+}
+
+.error-page-title {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.error-page-message {
   color: var(--color-gray-600);
+  margin-bottom: var(--space-6);
+}
+
+.error-page-actions {
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.contact-hint::before {
-  content: "ℹ️";
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-@media (max-width: 768px) {
-  .contact-fields-section {
-    padding: 1rem;
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-  }
+  justify-content: center;
 }
