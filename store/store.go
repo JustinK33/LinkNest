@@ -5,7 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/mail"
+	neturl "net/url"
+	"regexp"
+	"strings"
+	"unicode/utf8"
+
 	"time"
+
+	"github.com/go-sql-driver/mysql"
 
 	"linknest/auth"
 	"linknest/models"
@@ -23,22 +31,146 @@ func (s *Store) DB() *sql.DB {
 	return s.db
 }
 
+// Errors a caller can render straight into a page. Everything else coming out of
+// this package is a driver or context error, which the handler logs and replaces
+// with a generic message.
+const (
+	ErrEmailTaken    = models.UserError("That email is already registered. Try signing in instead.")
+	ErrUsernameTaken = models.UserError("That username is already taken. Please pick another.")
+
+	ErrInvalidEmail    = models.UserError("Please enter a valid email address.")
+	ErrInvalidUsername = models.UserError("Your username must be 3-30 characters, using only letters, numbers, dots, dashes or underscores.")
+	ErrNameRequired    = models.UserError("Please enter both a first and last name.")
+	ErrNameTooLong     = models.UserError("First and last names are limited to 60 characters each.")
+	ErrBioTooLong      = models.UserError("Your bio is limited to 500 characters.")
+
+	ErrTitleRequired  = models.UserError("Please give the link a title.")
+	ErrTitleTooLong   = models.UserError("Link titles are limited to 120 characters.")
+	ErrInvalidLinkURL = models.UserError("That doesn't look like a valid link. Check the address and try again.")
+	ErrLinkNotFound   = models.UserError("That link no longer exists.")
+	ErrLinkAtEdge     = models.UserError("That link is already at the end of your list.")
+)
+
+// Field limits. Enforced here rather than in the handlers so no write path can
+// skip them, and deliberately below the column widths so a long value is a
+// validation message instead of a truncation or a driver error.
+const (
+	maxEmailLen = 254
+	maxNameLen  = 60
+	maxBioLen   = 500
+	maxTitleLen = 120
+	maxURLLen   = 2048
+)
+
+const mysqlDuplicateEntry = 1062
+
+// usernamePattern is deliberately stricter than auth.Slug: the slug generator
+// drops anything it doesn't recognise, so "!!!" would silently become a valid
+// signup. Requiring the raw input to be clean means the public URL matches what
+// the user actually typed.
+var usernamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]{3,30}$`)
+
+func validateSignup(email, username, first, last string) error {
+	if len(email) > maxEmailLen {
+		return ErrInvalidEmail
+	}
+	// ParseAddress also accepts `Name <addr>`; a bare address must not have a
+	// display name attached to it.
+	addr, err := mail.ParseAddress(email)
+	if err != nil || addr.Name != "" || addr.Address != email {
+		return ErrInvalidEmail
+	}
+	if !usernamePattern.MatchString(username) || auth.Slug(username) == "" {
+		return ErrInvalidUsername
+	}
+	return validateNames(first, last)
+}
+
+func validateNames(first, last string) error {
+	if first == "" || last == "" {
+		return ErrNameRequired
+	}
+	if utf8.RuneCountInString(first) > maxNameLen || utf8.RuneCountInString(last) > maxNameLen {
+		return ErrNameTooLong
+	}
+	return nil
+}
+
+func validateLink(title, url string) error {
+	if title == "" {
+		return ErrTitleRequired
+	}
+	if utf8.RuneCountInString(title) > maxTitleLen {
+		return ErrTitleTooLong
+	}
+	if url == "" || len(url) > maxURLLen {
+		return ErrInvalidLinkURL
+	}
+	// "//evil.example" is a protocol-relative URL: it looks like a same-site path
+	// but leaves the site, so it is not the root-relative link safeURL allows.
+	if strings.HasPrefix(url, "//") {
+		return ErrInvalidLinkURL
+	}
+	if strings.HasPrefix(url, "/") {
+		return nil
+	}
+	// Handlers pass everything else through safeURL, so a scheme is already
+	// present. A host is what's worth checking: "https://" alone parses fine.
+	parsed, err := neturl.Parse(url)
+	if err != nil {
+		return ErrInvalidLinkURL
+	}
+	switch parsed.Scheme {
+	case "http", "https":
+		if parsed.Host == "" {
+			return ErrInvalidLinkURL
+		}
+	case "mailto", "tel":
+		if parsed.Opaque == "" {
+			return ErrInvalidLinkURL
+		}
+	default:
+		return ErrInvalidLinkURL
+	}
+	return nil
+}
+
+// signupConflict maps a duplicate-key violation on users to a sentinel error.
+// Anything else is returned unchanged for the caller to log and generalize.
+func signupConflict(err error) error {
+	var mysqlErr *mysql.MySQLError
+	if !errors.As(err, &mysqlErr) || mysqlErr.Number != mysqlDuplicateEntry {
+		return err
+	}
+	switch {
+	case strings.Contains(mysqlErr.Message, "idx_users_email"):
+		return ErrEmailTaken
+	case strings.Contains(mysqlErr.Message, "idx_users_username"), strings.Contains(mysqlErr.Message, "idx_users_slug"):
+		return ErrUsernameTaken
+	default:
+		return err
+	}
+}
+
 func (s *Store) CreateUser(ctx context.Context, email string, password string, username string, first string, last string) (models.User, error) {
+	email = strings.TrimSpace(email)
+	username = strings.TrimSpace(username)
+	first, last = strings.TrimSpace(first), strings.TrimSpace(last)
+	if err := validateSignup(email, username, first, last); err != nil {
+		return models.User{}, err
+	}
 	hash, err := auth.HashPassword(password)
 	if err != nil {
 		return models.User{}, err
 	}
 	slug := auth.Slug(username)
-	if slug == "" {
-		return models.User{}, errors.New("username must contain letters or numbers")
-	}
 	const profileColor = "#56738c"
 	result, err := s.db.ExecContext(ctx, `
 		INSERT INTO users (email, password_hash, username, slug, first_name, last_name, bio, profile_color)
 		VALUES (?, ?, ?, ?, ?, ?, '', ?)
 	`, email, hash, username, slug, first, last, profileColor)
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, signupConflict(err)
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
@@ -111,6 +243,13 @@ func (s *Store) UserBySlug(ctx context.Context, slug string) (models.User, error
 }
 
 func (s *Store) UpdateProfile(ctx context.Context, userID int64, first string, last string, bio string) error {
+	first, last, bio = strings.TrimSpace(first), strings.TrimSpace(last), strings.TrimSpace(bio)
+	if err := validateNames(first, last); err != nil {
+		return err
+	}
+	if utf8.RuneCountInString(bio) > maxBioLen {
+		return ErrBioTooLong
+	}
 	_, err := s.db.ExecContext(ctx, `
 		UPDATE users
 		SET first_name = ?, last_name = ?, bio = ?, updated_at = now()
@@ -120,6 +259,10 @@ func (s *Store) UpdateProfile(ctx context.Context, userID int64, first string, l
 }
 
 func (s *Store) CreateLink(ctx context.Context, userID int64, title string, url string, public bool) error {
+	title, url = strings.TrimSpace(title), strings.TrimSpace(url)
+	if err := validateLink(title, url); err != nil {
+		return err
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
