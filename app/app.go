@@ -33,6 +33,9 @@ var funcs = template.FuncMap{
 		}
 		return strings.ToUpper(b.String())
 	},
+	// sub exists because text/template has no arithmetic, and the dashboard needs
+	// to know which link is last so it can disable its "move down" arrow.
+	"sub": func(a, b int) int { return a - b },
 }
 
 // pageNames lists every standalone page template. Each is parsed together

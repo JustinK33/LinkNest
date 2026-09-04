@@ -10,7 +10,7 @@
   <div class="dashboard-editor-shell container-md">
     <section class="workspace-panel is-active" data-panel="profile">
       <div class="dashboard-profile-header">
-        <div class="dashboard-profile-avatar" style="background-color: {{.Data.User.ProfileColor}}; color: white;">
+        <div class="dashboard-profile-avatar" style="background-color: {{.Data.User.ProfileColor}}">
           {{initials .Data.User.FirstName .Data.User.LastName}}
         </div>
         <h1 class="dashboard-profile-name">{{.Data.User.Username}}</h1>
@@ -77,20 +77,51 @@
 
       {{if .Data.Links}}
         <div class="dashboard-links-list">
-          {{range .Data.Links}}
+          {{$count := len .Data.Links}}
+          {{range $index, $link := .Data.Links}}
             <article class="dashboard-link-card">
               <div class="dashboard-link-content">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <p class="dashboard-link-title">{{.Title}}</p>
-                  {{if not .Public}}
-                    <span style="font-size: 0.75rem; background: var(--color-gray-300); color: var(--color-gray-700); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 500;">Private</span>
-                  {{end}}
+                <div class="dashboard-link-heading">
+                  <p class="dashboard-link-title">{{$link.Title}}</p>
+                  {{if not $link.Public}}<span class="badge-private">Private</span>{{end}}
                 </div>
-                <p class="dashboard-link-url"><a href="{{.URL}}">{{.URL}}</a></p>
+                <p class="dashboard-link-url"><a href="{{$link.URL}}" target="_blank" rel="noopener">{{$link.URL}}</a></p>
               </div>
+
               <div class="dashboard-link-actions">
-                <span class="dashboard-value" style="font-size: 0.9rem;">{{.ClickCount}} clicks</span>
+                <span class="dashboard-link-clicks">{{$link.ClickCount}} clicks</span>
+                <div class="link-move-group">
+                  <form method="post" action="/links/{{$link.ID}}/move">
+                    <input type="hidden" name="dir" value="up">
+                    <button type="submit" class="link-move" aria-label="Move {{$link.Title}} up"{{if eq $index 0}} disabled{{end}}>&#9650;</button>
+                  </form>
+                  <form method="post" action="/links/{{$link.ID}}/move">
+                    <input type="hidden" name="dir" value="down">
+                    <button type="submit" class="link-move" aria-label="Move {{$link.Title}} down"{{if eq $index (sub $count 1)}} disabled{{end}}>&#9660;</button>
+                  </form>
+                </div>
               </div>
+
+              <details class="link-edit">
+                <summary>Edit</summary>
+                <form method="post" action="/links/{{$link.ID}}/update" class="link-edit-form">
+                  <div class="form-group">
+                    <label for="title-{{$link.ID}}">Title</label>
+                    <input id="title-{{$link.ID}}" name="title" type="text" value="{{$link.Title}}" maxlength="120" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="url-{{$link.ID}}">URL</label>
+                    <input id="url-{{$link.ID}}" name="url" type="text" value="{{$link.URL}}" maxlength="2048" required>
+                  </div>
+                  <div class="form-group">
+                    <label><input type="checkbox" name="public"{{if $link.Public}} checked{{end}}> Public</label>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm">Save link</button>
+                </form>
+                <form method="post" action="/links/{{$link.ID}}/delete" class="link-delete-form" data-confirm-title="{{$link.Title}}">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete link</button>
+                </form>
+              </details>
             </article>
           {{end}}
         </div>
@@ -163,19 +194,41 @@
     if (!root) return;
     var tabs = Array.prototype.slice.call(root.querySelectorAll(".workspace-tab"));
     var panels = Array.prototype.slice.call(root.querySelectorAll(".workspace-panel"));
-    root.querySelector(".dashboard-workspace-tabs").addEventListener("click", function (event) {
-      var tab = event.target.closest(".workspace-tab");
-      if (!tab) return;
-      var name = tab.dataset.tab;
+
+    function show(name) {
+      var match = false;
       tabs.forEach(function (item) {
-        item.classList.toggle("is-active", item === tab);
-        item.setAttribute("aria-selected", String(item === tab));
+        var isTarget = item.dataset.tab === name;
+        match = match || isTarget;
+        item.classList.toggle("is-active", isTarget);
+        item.setAttribute("aria-selected", String(isTarget));
       });
+      if (!match) return false;
       panels.forEach(function (panel) {
         var isTarget = panel.dataset.panel === name;
         panel.classList.toggle("is-active", isTarget);
         panel.hidden = !isTarget;
       });
+      return true;
+    }
+
+    root.querySelector(".dashboard-workspace-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest(".workspace-tab");
+      if (tab) show(tab.dataset.tab);
+    });
+
+    // Every link action redirects to /dashboard#links. Without this the page
+    // would come back on the Profile tab and the change would look lost.
+    if (!show(location.hash.replace("#", ""))) show("profile");
+
+    // The title is passed as data rather than interpolated into a JS string, so
+    // escaping stays a plain HTML-attribute concern.
+    root.addEventListener("submit", function (event) {
+      var form = event.target.closest("[data-confirm-title]");
+      if (!form) return;
+      if (!confirm('Delete "' + form.dataset.confirmTitle + '"? This cannot be undone.')) {
+        event.preventDefault();
+      }
     });
   })();
 </script>

@@ -281,6 +281,137 @@ func (s *Store) CreateLink(ctx context.Context, userID int64, title string, url 
 	return tx.Commit()
 }
 
+// UpdateLink and DeleteLink are both scoped by user_id, so a guessed or stale
+// link ID from another account is a "not found" rather than an edit.
+func (s *Store) UpdateLink(ctx context.Context, userID int64, linkID int64, title string, url string, public bool) error {
+	title, url = strings.TrimSpace(title), strings.TrimSpace(url)
+	if err := validateLink(title, url); err != nil {
+		return err
+	}
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE links
+		SET title = ?, url = ?, public = ?, updated_at = now()
+		WHERE id = ? AND user_id = ?
+	`, title, url, public, linkID, userID)
+	if err != nil {
+		return err
+	}
+	return requireRow(result)
+}
+
+func (s *Store) DeleteLink(ctx context.Context, userID int64, linkID int64) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	result, err := tx.ExecContext(ctx, `DELETE FROM links WHERE id = ? AND user_id = ?`, linkID, userID)
+	if err != nil {
+		return err
+	}
+	if err := requireRow(result); err != nil {
+		return err
+	}
+	// click_events rows are left alone on purpose: they are the user's historical
+	// traffic, and the dashboard totals would drop retroactively if a delete took
+	// them with it. Nothing renders a deleted link, since every read joins links.
+	//
+	// Close the gap the delete left, so positions stay 0..n-1 and MoveLink can
+	// keep treating them as an index.
+	if err := renumber(ctx, tx, userID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// MoveLink shifts one link one place up or down. It rewrites the whole list's
+// positions rather than swapping two rows: legacy rows can share a position or
+// leave gaps, and a swap between two equal positions is a no-op that looks like
+// a silent failure to the user.
+func (s *Store) MoveLink(ctx context.Context, userID int64, linkID int64, up bool) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	ids, err := orderedLinkIDs(ctx, tx, userID)
+	if err != nil {
+		return err
+	}
+	at := -1
+	for i, id := range ids {
+		if id == linkID {
+			at = i
+			break
+		}
+	}
+	if at < 0 {
+		return ErrLinkNotFound
+	}
+	to := at + 1
+	if up {
+		to = at - 1
+	}
+	if to < 0 || to >= len(ids) {
+		return ErrLinkAtEdge
+	}
+	ids[at], ids[to] = ids[to], ids[at]
+	if err := writePositions(ctx, tx, userID, ids); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// requireRow turns "the UPDATE matched nothing" into a user-facing error. Without
+// it, editing someone else's link or an already-deleted one reports success.
+func requireRow(result sql.Result) error {
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrLinkNotFound
+	}
+	return nil
+}
+
+func renumber(ctx context.Context, tx *sql.Tx, userID int64) error {
+	ids, err := orderedLinkIDs(ctx, tx, userID)
+	if err != nil {
+		return err
+	}
+	return writePositions(ctx, tx, userID, ids)
+}
+
+func orderedLinkIDs(ctx context.Context, tx *sql.Tx, userID int64) ([]int64, error) {
+	rows, err := tx.QueryContext(ctx, `SELECT id FROM links WHERE user_id = ? ORDER BY position, id`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// ponytail: one UPDATE per row. LinksForUser caps a profile at 100 links, so
+// this is at most 100 statements inside one transaction. Swap for a single
+// CASE-expression UPDATE if that cap ever rises.
+func writePositions(ctx context.Context, tx *sql.Tx, userID int64, ids []int64) error {
+	for i, id := range ids {
+		if _, err := tx.ExecContext(ctx, `UPDATE links SET position = ? WHERE id = ? AND user_id = ?`, i, id, userID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Store) LinksForUser(ctx context.Context, userID int64, onlyPublic bool, limit int, afterID int64) ([]models.Link, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 50

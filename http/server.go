@@ -50,6 +50,11 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /dashboard", s.requireAuth(s.dashboard))
 	mux.HandleFunc("POST /profile", s.requireAuth(s.updateProfile))
 	mux.HandleFunc("POST /links", s.requireAuth(s.createLink))
+	// Forms can only POST, so the verb lives in the path. "/links/reorder" would
+	// be ambiguous with "/links/{id}" but the mux prefers the literal segment.
+	mux.HandleFunc("POST /links/{id}/update", s.requireAuth(s.updateLink))
+	mux.HandleFunc("POST /links/{id}/delete", s.requireAuth(s.deleteLink))
+	mux.HandleFunc("POST /links/{id}/move", s.requireAuth(s.moveLink))
 	mux.HandleFunc("POST /links/{id}/track_click", s.trackClick)
 	mux.HandleFunc("GET /api/v1/events", s.requireAuth(s.apiEvents))
 	mux.HandleFunc("GET /api/v1/status", s.requireAuth(s.apiStatus))
@@ -179,6 +184,49 @@ func (s *Server) createLink(w http.ResponseWriter, r *http.Request, user models.
 	err := s.store.CreateLink(r.Context(), user.ID, title, safeURL(r.FormValue("url")), r.FormValue("public") == "on")
 	s.flashResult(w, err, "create link", "Added \""+title+"\" to your profile.", "We couldn't add that link. Please try again.")
 	http.Redirect(w, r, "/dashboard#links", http.StatusSeeOther)
+}
+
+func (s *Server) updateLink(w http.ResponseWriter, r *http.Request, user models.User) {
+	id, ok := s.linkID(w, r)
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		s.renderError(w, r, http.StatusBadRequest, "We couldn't read that form. Please try again.")
+		return
+	}
+	err := s.store.UpdateLink(r.Context(), user.ID, id, r.FormValue("title"), safeURL(r.FormValue("url")), r.FormValue("public") == "on")
+	s.flashResult(w, err, "update link", "Link updated.", "We couldn't save that link. Please try again.")
+	http.Redirect(w, r, "/dashboard#links", http.StatusSeeOther)
+}
+
+func (s *Server) deleteLink(w http.ResponseWriter, r *http.Request, user models.User) {
+	id, ok := s.linkID(w, r)
+	if !ok {
+		return
+	}
+	err := s.store.DeleteLink(r.Context(), user.ID, id)
+	s.flashResult(w, err, "delete link", "Link deleted.", "We couldn't delete that link. Please try again.")
+	http.Redirect(w, r, "/dashboard#links", http.StatusSeeOther)
+}
+
+func (s *Server) moveLink(w http.ResponseWriter, r *http.Request, user models.User) {
+	id, ok := s.linkID(w, r)
+	if !ok {
+		return
+	}
+	err := s.store.MoveLink(r.Context(), user.ID, id, r.FormValue("dir") == "up")
+	s.flashResult(w, err, "move link", "Order updated.", "We couldn't reorder your links. Please try again.")
+	http.Redirect(w, r, "/dashboard#links", http.StatusSeeOther)
+}
+
+func (s *Server) linkID(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		s.notFound(w, r)
+		return 0, false
+	}
+	return id, true
 }
 
 // flashResult turns a store result into the one-shot message shown after the
