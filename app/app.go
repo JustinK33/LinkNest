@@ -39,12 +39,17 @@ var Funcs = template.FuncMap{
 	// sub exists because text/template has no arithmetic, and the dashboard needs
 	// to know which link is last so it can disable its "move down" arrow.
 	"sub": func(a, b int) int { return a - b },
-	// host renders the destination domain under a public link, so a visitor can
-	// see where a link goes before tapping it.
+	// host renders the destination under a public link, so a visitor can see
+	// where it goes before tapping it. mailto: and tel: carry their target in
+	// Opaque rather than Host; without them those cards lose their second line
+	// and sit visibly shorter than every other card in the list.
 	"host": func(raw string) string {
 		parsed, err := url.Parse(raw)
-		if err != nil || parsed.Host == "" {
+		if err != nil {
 			return ""
+		}
+		if parsed.Host == "" {
+			return parsed.Opaque
 		}
 		return strings.TrimPrefix(parsed.Host, "www.")
 	},

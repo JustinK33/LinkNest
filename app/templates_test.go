@@ -52,6 +52,21 @@ func TestEveryPageRenders(t *testing.T) {
 	}
 }
 
+func TestHostHelper(t *testing.T) {
+	host := Funcs["host"].(func(string) string)
+	for raw, want := range map[string]string{
+		"https://www.example.com/work":     "example.com",
+		"https://notes.example.org/engine": "notes.example.org",
+		"mailto:ada@example.com":           "ada@example.com",
+		"tel:+15551234567":                 "+15551234567",
+		"/relative/path":                   "",
+	} {
+		if got := host(raw); got != want {
+			t.Errorf("host(%q) = %q, want %q", raw, got, want)
+		}
+	}
+}
+
 // The fonts must be reachable from the document, not from an @import placed
 // after a ruleset in app.css, where every browser silently drops it.
 func TestFontsAreLoadedFromTheLayout(t *testing.T) {
