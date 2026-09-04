@@ -35,6 +35,12 @@
     </div>
   </nav>
 
+  {{with .Flash}}
+    <div class="flash-container">
+      <div class="flash {{.Kind}}" role="status">{{.Message}}</div>
+    </div>
+  {{end}}
+
   <main>
     {{template "content" .}}
   </main>

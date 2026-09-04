@@ -38,7 +38,7 @@ var funcs = template.FuncMap{
 // pageNames lists every standalone page template. Each is parsed together
 // with layout.html into its own *template.Template so their "content"
 // blocks don't collide with one another.
-var pageNames = []string{"home.html", "login.html", "register.html", "dashboard.html", "profile.html"}
+var pageNames = []string{"home.html", "login.html", "register.html", "dashboard.html", "profile.html", "error.html"}
 
 func New(cfg config.Config, db *sql.DB) *App {
 	registry := metrics.New()

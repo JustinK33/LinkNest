@@ -2,6 +2,17 @@ package models
 
 import "time"
 
+// UserError is an error whose text is already written for a person and is safe
+// to render in a page. Anything that is not a UserError gets logged and shown as
+// a generic failure, which is what keeps driver text like
+// "Error 1062: Duplicate entry ... for key 'idx_users_email'" out of the UI.
+//
+// It lives here because both auth and store return these and models is the only
+// package both can import.
+type UserError string
+
+func (e UserError) Error() string { return string(e) }
+
 type User struct {
 	ID           int64
 	Email        string

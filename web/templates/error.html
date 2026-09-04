@@ -1,0 +1,20 @@
+{{define "title"}}{{.Data.Title}} - LinkNest{{end}}
+{{define "meta"}}<meta name="robots" content="noindex">{{end}}
+{{define "content"}}
+<div class="container-sm error-page">
+  <div class="card">
+    <div class="empty-state">
+      <div class="error-page-status">{{.Data.Status}}</div>
+      <h1 class="error-page-title">{{.Data.Title}}</h1>
+      <p class="error-page-message">{{.Data.Message}}</p>
+      <div class="error-page-actions">
+        {{if .CurrentUser.ID}}
+          <a href="/dashboard" class="btn btn-primary">Back to dashboard</a>
+        {{else}}
+          <a href="/" class="btn btn-primary">Back to home</a>
+        {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

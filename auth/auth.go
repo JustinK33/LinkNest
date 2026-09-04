@@ -5,20 +5,23 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"linknest/models"
 )
 
 const CookieName = "linknest_session"
 
+const ErrPasswordTooShort = models.UserError("Your password must be at least 8 characters.")
+
 func HashPassword(password string) (string, error) {
 	if len(password) < 8 {
-		return "", errors.New("password must be at least 8 characters")
+		return "", ErrPasswordTooShort
 	}
 	body, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(body), err
@@ -73,6 +76,55 @@ func ClearSessionCookie(w http.ResponseWriter) {
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	})
+}
+
+// FlashCookieName holds a one-shot "kind|message" pair across a redirect.
+// A cookie rather than a query param so a refresh doesn't re-show a stale
+// message and it never ends up in a copied URL.
+const FlashCookieName = "linknest_flash"
+
+// Flash is what the layout renders. Kind matches the .flash CSS modifiers
+// ("notice" or "alert").
+type Flash struct {
+	Kind    string
+	Message string
+}
+
+func SetFlash(w http.ResponseWriter, kind string, message string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     FlashCookieName,
+		Value:    base64.RawURLEncoding.EncodeToString([]byte(kind + "|" + message)),
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   60,
+	})
+}
+
+// TakeFlash reads the flash cookie and clears it in the same response, so the
+// message is shown exactly once.
+func TakeFlash(w http.ResponseWriter, r *http.Request) *Flash {
+	cookie, err := r.Cookie(FlashCookieName)
+	if err != nil {
+		return nil
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     FlashCookieName,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
+	raw, err := base64.RawURLEncoding.DecodeString(cookie.Value)
+	if err != nil {
+		return nil
+	}
+	kind, message, ok := strings.Cut(string(raw), "|")
+	if !ok || (kind != "notice" && kind != "alert") {
+		return nil
+	}
+	return &Flash{Kind: kind, Message: message}
 }
 
 func Slug(input string) string {

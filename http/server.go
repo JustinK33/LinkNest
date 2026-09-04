@@ -1,9 +1,12 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"html/template"
 	"io/fs"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -69,6 +72,12 @@ func (s *Server) up(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
+	// "GET /" is the mux catch-all, so anything with extra path segments lands
+	// here too. Without this a URL like /a/b would render the landing page.
+	if r.URL.Path != "/" {
+		s.notFound(w, r)
+		return
+	}
 	s.render(w, r, "home.html", nil)
 }
 
@@ -78,17 +87,25 @@ func (s *Server) registerForm(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+		s.renderError(w, r, http.StatusBadRequest, "We couldn't read that form. Please try again.")
 		return
 	}
 	user, err := s.store.CreateUser(r.Context(), r.FormValue("email"), r.FormValue("password"), r.FormValue("username"), r.FormValue("first_name"), r.FormValue("last_name"))
 	if err != nil {
-		s.render(w, r, "register.html", map[string]any{"Error": err.Error()})
+		// Hand back what they typed so a single conflict doesn't wipe the form.
+		s.render(w, r, "register.html", map[string]any{
+			"Error":     userMessage(err, "register", "We couldn't create your account just now. Please try again."),
+			"Username":  r.FormValue("username"),
+			"FirstName": r.FormValue("first_name"),
+			"LastName":  r.FormValue("last_name"),
+			"Email":     r.FormValue("email"),
+		})
 		return
 	}
 	sessionID, err := s.store.CreateSession(r.Context(), user.ID, clientIP(r), r.UserAgent())
 	if err != nil {
-		http.Error(w, "could not create session", http.StatusInternalServerError)
+		log.Printf("register: create session: %v", err)
+		s.renderError(w, r, http.StatusInternalServerError, "Your account was created but we couldn't sign you in. Try logging in.")
 		return
 	}
 	auth.SetSessionCookie(w, sessionID, s.cfg.SessionSecret)
@@ -101,17 +118,21 @@ func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+		s.renderError(w, r, http.StatusBadRequest, "We couldn't read that form. Please try again.")
 		return
 	}
 	user, err := s.store.Authenticate(r.Context(), r.FormValue("email"), r.FormValue("password"))
 	if err != nil {
-		s.render(w, r, "login.html", map[string]any{"Error": "Try another email or password."})
+		s.render(w, r, "login.html", map[string]any{
+			"Error": "Try another email or password.",
+			"Email": r.FormValue("email"),
+		})
 		return
 	}
 	sessionID, err := s.store.CreateSession(r.Context(), user.ID, clientIP(r), r.UserAgent())
 	if err != nil {
-		http.Error(w, "could not create session", http.StatusInternalServerError)
+		log.Printf("login: create session: %v", err)
+		s.renderError(w, r, http.StatusInternalServerError, "We couldn't sign you in just now. Please try again.")
 		return
 	}
 	auth.SetSessionCookie(w, sessionID, s.cfg.SessionSecret)
@@ -125,13 +146,15 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	auth.ClearSessionCookie(w)
+	auth.SetFlash(w, "notice", "You're signed out.")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (s *Server) dashboard(w http.ResponseWriter, r *http.Request, user models.User) {
 	dashboard, err := s.store.Dashboard(r.Context(), user)
 	if err != nil {
-		http.Error(w, "dashboard error", http.StatusInternalServerError)
+		log.Printf("dashboard: %v", err)
+		s.renderError(w, r, http.StatusInternalServerError, "We couldn't load your dashboard. Please try again.")
 		return
 	}
 	s.render(w, r, "dashboard.html", dashboard)
@@ -139,27 +162,43 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request, user models.U
 
 func (s *Server) updateProfile(w http.ResponseWriter, r *http.Request, user models.User) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+		s.renderError(w, r, http.StatusBadRequest, "We couldn't read that form. Please try again.")
 		return
 	}
-	if err := s.store.UpdateProfile(r.Context(), user.ID, r.FormValue("first_name"), r.FormValue("last_name"), r.FormValue("bio")); err != nil {
-		http.Error(w, "profile update failed", http.StatusInternalServerError)
-		return
-	}
+	err := s.store.UpdateProfile(r.Context(), user.ID, r.FormValue("first_name"), r.FormValue("last_name"), r.FormValue("bio"))
+	s.flashResult(w, err, "update profile", "Profile saved.", "We couldn't save your profile. Please try again.")
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
 func (s *Server) createLink(w http.ResponseWriter, r *http.Request, user models.User) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+		s.renderError(w, r, http.StatusBadRequest, "We couldn't read that form. Please try again.")
 		return
 	}
-	public := r.FormValue("public") == "on"
-	if err := s.store.CreateLink(r.Context(), user.ID, r.FormValue("title"), safeURL(r.FormValue("url")), public); err != nil {
-		http.Error(w, "link create failed", http.StatusInternalServerError)
+	title := r.FormValue("title")
+	err := s.store.CreateLink(r.Context(), user.ID, title, safeURL(r.FormValue("url")), r.FormValue("public") == "on")
+	s.flashResult(w, err, "create link", "Added \""+title+"\" to your profile.", "We couldn't add that link. Please try again.")
+	http.Redirect(w, r, "/dashboard#links", http.StatusSeeOther)
+}
+
+// flashResult turns a store result into the one-shot message shown after the
+// redirect. A models.UserError is already written for a person; anything else is
+// logged and replaced, so driver text never reaches the page.
+func (s *Server) flashResult(w http.ResponseWriter, err error, op string, success string, failure string) {
+	if err == nil {
+		auth.SetFlash(w, "notice", success)
 		return
 	}
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	auth.SetFlash(w, "alert", userMessage(err, op, failure))
+}
+
+func userMessage(err error, op string, fallback string) string {
+	var friendly models.UserError
+	if errors.As(err, &friendly) {
+		return friendly.Error()
+	}
+	log.Printf("%s: %v", op, err)
+	return fallback
 }
 
 func (s *Server) trackClick(w http.ResponseWriter, r *http.Request) {
@@ -205,20 +244,25 @@ func (s *Server) trackClick(w http.ResponseWriter, r *http.Request) {
 func (s *Server) publicProfile(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	if strings.Contains(slug, ".") || reservedSlug(slug) {
-		http.NotFound(w, r)
+		s.notFound(w, r)
 		return
 	}
 	user, err := s.store.UserBySlug(r.Context(), slug)
 	if err != nil {
-		http.NotFound(w, r)
+		s.notFound(w, r)
 		return
 	}
 	links, err := s.store.LinksForUser(r.Context(), user.ID, true, 100, 0)
 	if err != nil {
-		http.Error(w, "profile error", http.StatusInternalServerError)
+		log.Printf("public profile %s: %v", slug, err)
+		s.renderError(w, r, http.StatusInternalServerError, "We couldn't load this profile. Please try again.")
 		return
 	}
 	s.render(w, r, "profile.html", map[string]any{"User": user, "Links": links})
+}
+
+func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
+	s.renderError(w, r, http.StatusNotFound, "We couldn't find that page. The link may have changed or the profile may no longer exist.")
 }
 
 func (s *Server) apiEvents(w http.ResponseWriter, r *http.Request, user models.User) {
@@ -258,6 +302,9 @@ func (s *Server) requireAuth(next func(http.ResponseWriter, *http.Request, model
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, ok := s.currentUser(r)
 		if !ok {
+			// Without this the redirect looks like the login page appeared for no
+			// reason, which is indistinguishable from a bug to whoever hit it.
+			auth.SetFlash(w, "alert", "Please sign in to continue.")
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -266,15 +313,40 @@ func (s *Server) requireAuth(next func(http.ResponseWriter, *http.Request, model
 }
 
 func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, data any) {
+	s.renderStatus(w, r, http.StatusOK, name, data)
+}
+
+// renderStatus buffers the template before writing anything. Rendering straight
+// to the ResponseWriter would commit a 200 and partial HTML before a mid-render
+// failure could be reported, so the error path below could never work.
+func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int, name string, data any) {
 	user, _ := s.currentUser(r)
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	page := struct {
 		CurrentUser models.User
+		Flash       *auth.Flash
+		SiteURL     string
 		Data        any
-	}{CurrentUser: user, Data: data}
-	if err := s.pages[name].ExecuteTemplate(w, "layout", page); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}{CurrentUser: user, Flash: auth.TakeFlash(w, r), SiteURL: siteURL(r), Data: data}
+
+	var buf bytes.Buffer
+	if err := s.pages[name].ExecuteTemplate(&buf, "layout", page); err != nil {
+		log.Printf("render %s: %v", name, err)
+		http.Error(w, "Something went wrong on our end.", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	_, _ = buf.WriteTo(w)
+}
+
+// renderError shows a styled error page inside the app layout instead of
+// dropping the user onto a bare plain-text response.
+func (s *Server) renderError(w http.ResponseWriter, r *http.Request, status int, message string) {
+	s.renderStatus(w, r, status, "error.html", map[string]any{
+		"Status":  status,
+		"Title":   http.StatusText(status),
+		"Message": message,
+	})
 }
 
 func writeJSON(w http.ResponseWriter, data any) {
@@ -287,6 +359,19 @@ func nextAfter(events []models.ClickEvent) int64 {
 		return 0
 	}
 	return events[len(events)-1].ID
+}
+
+// siteURL is the request origin, with no trailing slash. Social crawlers won't
+// resolve a relative og:image or og:url, so templates need to build absolute
+// ones. Behind Vercel's proxy the scheme only shows up in X-Forwarded-Proto.
+func siteURL(r *http.Request) string {
+	scheme := "https"
+	if forwarded := r.Header.Get("X-Forwarded-Proto"); forwarded != "" {
+		scheme = strings.TrimSpace(strings.Split(forwarded, ",")[0])
+	} else if r.TLS == nil {
+		scheme = "http"
+	}
+	return scheme + "://" + r.Host
 }
 
 func clientIP(r *http.Request) string {

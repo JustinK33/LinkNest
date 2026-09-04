@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"encoding/base64"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -66,5 +69,57 @@ func BenchmarkIdempotencyKey(b *testing.B) {
 	now := time.Now()
 	for i := 0; i < b.N; i++ {
 		_ = IdempotencyKey(10, "127.0.0.1", "ua", "ref", now)
+	}
+}
+
+func TestFlashRoundTripIsOneShot(t *testing.T) {
+	rec := httptest.NewRecorder()
+	SetFlash(rec, "notice", "Profile saved.")
+
+	// First read: the request carries the cookie the redirect response set.
+	req := httptest.NewRequest("GET", "/dashboard", nil)
+	for _, c := range rec.Result().Cookies() {
+		req.AddCookie(c)
+	}
+	next := httptest.NewRecorder()
+	flash := TakeFlash(next, req)
+	if flash == nil {
+		t.Fatal("TakeFlash returned nil, want a flash")
+	}
+	if flash.Kind != "notice" || flash.Message != "Profile saved." {
+		t.Fatalf("TakeFlash = %+v, want notice/Profile saved.", flash)
+	}
+
+	// TakeFlash must expire the cookie in the same response, or the message
+	// re-appears on every refresh.
+	var cleared bool
+	for _, c := range next.Result().Cookies() {
+		if c.Name == FlashCookieName && c.MaxAge < 0 {
+			cleared = true
+		}
+	}
+	if !cleared {
+		t.Fatal("TakeFlash did not expire the flash cookie")
+	}
+}
+
+func TestTakeFlashRejectsGarbage(t *testing.T) {
+	for name, value := range map[string]string{
+		"not base64":   "!!!not-base64!!!",
+		"no separator": base64.RawURLEncoding.EncodeToString([]byte("noseparator")),
+		"unknown kind": base64.RawURLEncoding.EncodeToString([]byte("script|xss")),
+	} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.AddCookie(&http.Cookie{Name: FlashCookieName, Value: value})
+		if got := TakeFlash(httptest.NewRecorder(), req); got != nil {
+			t.Fatalf("%s: TakeFlash = %+v, want nil", name, got)
+		}
+	}
+}
+
+func TestTakeFlashWithoutCookie(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	if got := TakeFlash(httptest.NewRecorder(), req); got != nil {
+		t.Fatalf("TakeFlash = %+v, want nil", got)
 	}
 }
