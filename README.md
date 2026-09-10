@@ -27,7 +27,7 @@ The whole thing has two direct dependencies. Everything else is the standard lib
 | Passwords | bcrypt from `golang.org/x/crypto` |
 | Templates | `html/template`, compiled into the binary with `embed` |
 | Metrics | A hand-rolled in-memory registry rendered as Prometheus text |
-| Deploy | Docker Compose, Kamal, nginx and Certbot, or a single Vercel function |
+| Deploy | A GCP VM running the container behind nginx, with Certbot for TLS |
 | Load testing | k6 |
 
 `go.mod` has exactly two non-indirect requires. Sessions, routing, CSRF, and the metrics format are standard library plus code in this repo.
@@ -36,9 +36,9 @@ The whole thing has two direct dependencies. Everything else is the standard lib
 
 ```mermaid
 flowchart TD
-    visitor["Visitor browser"] -->|"GET /slug, POST /links/id/track_click"| server["http/server.go<br/>routing, signed sessions"]
+    visitor["Visitor browser"] -->|"GET /slug, POST /links/id/track_click"| nginx["nginx on the GCP VM<br/>TLS from Certbot, static caching"]
+    nginx -->|"proxy_pass to :8080"| server["http/server.go<br/>routing, signed sessions"]
     main["cmd/linknest/main.go"] --> server
-    vercel["api/index.go<br/>one Vercel function"] --> server
     server --> app["app/app.go<br/>html/template, embedded by web/embed.go"]
     server --> store["store/store.go<br/>validation and every SQL statement"]
     store -->|"INSERT ... ON DUPLICATE KEY UPDATE id = id"| db[("click_events, links, users, sessions")]
@@ -48,16 +48,17 @@ flowchart TD
     server -->|"GET /metrics"| metrics["metrics/metrics.go<br/>Prometheus text format"]
 ```
 
-Two entry points build the same app.
-`cmd/linknest/main.go` is the long-lived binary: it starts the HTTP server and the worker manager, whose tickers fire the hourly aggregator every 5 minutes and the daily one every 30.
-`api/index.go` is the Vercel path, and it wraps only the server, which is why the rollups don't run there. Pages, auth, links, and click tracking work fine on Vercel; the aggregate tables just stop advancing unless something long-lived is also pointed at the same database.
+It runs on a GCP VM: the container from `docker-compose.yaml` listening on 8080, nginx in front of it terminating TLS and caching static assets, and Certbot renewing the certificate for `linknest.info`.
+`cmd/linknest/main.go` is the entry point that deployment uses, and it starts both halves of the app: the HTTP server, and the worker manager whose tickers fire the hourly aggregator every 5 minutes and the daily one every 30.
+
+There is a second entry point, `api/index.go`, left from a period when this ran as a single serverless function. It wraps only the server, so the rollups don't run under it: pages, auth, links, and click tracking work, and the aggregate tables just stop advancing. It's why two of the lessons below are about Vercel.
 
 Every write goes through `store/store.go`, including validation, so no handler and no future non-form code path can write a row that skipped a check.
 Both aggregators do their work in a single `INSERT ... SELECT ... GROUP BY ... ON DUPLICATE KEY UPDATE`, so the database aggregates in one pass rather than the app looping, and each run is bracketed by a `worker_runs` row that goes from `running` to `succeeded` with a `rows_processed` count.
 
 ## What building this taught me
 
-**`sync.Once` around a database connection caches the failure too.** Deployed logs showed every request failing with "startup failed: context deadline exceeded". TiDB Cloud Serverless auto-pauses when idle, and waking it on a cold connection took longer than the 5 second ping timeout in `db.Open`. That part was a one-line fix. The real bug was that `api/index.go` used `sync.Once` to connect lazily, so a single slow wake-up poisoned the container permanently: every request after it kept failing until Vercel happened to recycle the instance. A mutex-guarded retry means a transient timeout stays transient. Serverless plus an auto-pausing database means cold start is the normal case, not the edge case.
+**`sync.Once` around a database connection caches the failure too.** This one is from the stretch when the app ran as a serverless function rather than on a VM, and the logs showed every request failing with "startup failed: context deadline exceeded". TiDB Cloud Serverless auto-pauses when idle, and waking it on a cold connection took longer than the 5 second ping timeout in `db.Open`. That part was a one-line fix. The real bug was that `api/index.go` used `sync.Once` to connect lazily, so a single slow wake-up poisoned the container permanently: every request after it kept failing until Vercel happened to recycle the instance. A mutex-guarded retry means a transient timeout stays transient. Serverless plus an auto-pausing database means cold start is the normal case, not the edge case.
 
 **`internal/` is a compiler rule, and someone else's build shim can break it.** Vercel's Go runtime wraps the handler in a synthetic `main__vc__go__.go` compiled as a loose file in the `command-line-arguments` pseudo-package, and Go's internal-visibility rule rejects that regardless of where the importer actually lives. It built fine with `go build ./...` and failed only through Vercel. Every `internal/X` package moved to `X` at the repo root. This is an application binary rather than a library, so the privacy `internal/` was enforcing wasn't protecting anything from anyone.
 
@@ -98,5 +99,6 @@ go test ./...
 go build ./cmd/linknest
 ```
 
-To deploy on Vercel, `api/index.go` wraps the app as a single function and `vercel.json` routes everything to it. Set `DATABASE_URL` (with `?tls=true` for TiDB Cloud) and `SESSION_SECRET` in the dashboard.
-Run `cmd/linknest` somewhere long-lived if you want the rollups, since a serverless function isn't around long enough for a background ticker.
+Deployment is the same Compose stack on a GCP VM, with `DATABASE_URL` pointed at TiDB Cloud instead of the local MySQL container, which needs `?tls=true`.
+nginx sits in front of it: [ops/nginx/linknest.info.conf](ops/nginx/linknest.info.conf) is the server block, [ops/nginx/docker/init-letsencrypt.sh](ops/nginx/docker/init-letsencrypt.sh) issues the first certificate, and [ops/nginx/certbot-renew-hook.sh](ops/nginx/certbot-renew-hook.sh) reloads nginx after a renewal.
+Running the whole binary rather than the serverless wrapper is what keeps the rollups advancing, since a background ticker needs a process that stays up.
