@@ -12,6 +12,17 @@
 <meta property="og:image" content="{{.SiteURL}}/static/linknestlogo.png">
 <meta name="twitter:card" content="summary">
 {{end}}
+{{define "nav-class"}}navbar-profile{{end}}
+{{define "nav-actions"}}
+<button type="button" class="btn btn-sm btn-secondary share-button" data-share-url="{{.SiteURL}}/{{.Data.User.Slug}}" data-share-title="{{.Data.User.FirstName}} {{.Data.User.LastName}} on LinkNest">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path>
+    <path d="M12 15V3"></path>
+    <path d="M8 7l4-4 4 4"></path>
+  </svg>
+  Share
+</button>
+{{end}}
 {{define "content"}}
 <div class="container-sm public-profile">
   <div class="card">
@@ -57,14 +68,61 @@
   {{end}}
 
   <div class="public-profile-footer">
-    <p>Powered by <a href="/">LinkNest</a></p>
+    {{if .CurrentUser.ID}}
+      <p>Powered by <a href="/">LinkNest</a></p>
+    {{else}}
+      <a href="/register" class="btn btn-primary profile-join-cta">Join @{{.Data.User.Slug}} on LinkNest</a>
+    {{end}}
   </div>
 </div>
+<div id="share-toast" class="share-toast" role="status" aria-live="polite"></div>
 <script>
   document.querySelectorAll("[data-link-id]").forEach(function(link) {
     link.addEventListener("click", function() {
       navigator.sendBeacon("/links/" + link.dataset.linkId + "/track_click");
     });
   });
+
+  var toast = document.getElementById("share-toast");
+  var toastTimer;
+  function announce(message) {
+    toast.textContent = message;
+    toast.classList.add("is-visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { toast.classList.remove("is-visible"); }, 2400);
+  }
+
+  function copyLink(url) {
+    // clipboard is undefined outside a secure context, so say so rather than
+    // leaving a dead button. The URL is in the address bar either way.
+    if (!navigator.clipboard) {
+      announce("Copy this page's address to share it");
+      return;
+    }
+    navigator.clipboard.writeText(url).then(function() {
+      announce("Link copied");
+    }, function() {
+      announce("Couldn't copy - try your browser's share menu");
+    });
+  }
+
+  var share = document.querySelector("[data-share-url]");
+  if (share) {
+    share.addEventListener("click", function() {
+      var url = share.dataset.shareUrl;
+      // The OS sheet beats anything we could draw, so prefer it where it exists.
+      // A dismissed sheet rejects with AbortError, which means "done" - only a
+      // real failure should fall through to the clipboard.
+      if (navigator.share) {
+        navigator.share({title: share.dataset.shareTitle, url: url}).catch(function(err) {
+          if (err.name !== "AbortError") {
+            copyLink(url);
+          }
+        });
+        return;
+      }
+      copyLink(url);
+    });
+  }
 </script>
 {{end}}

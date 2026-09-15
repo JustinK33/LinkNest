@@ -26,20 +26,24 @@
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <nav class="navbar">
+  <!-- nav-class and nav-actions let a page replace its own chrome. A public
+       profile overrides both: it is that person's page, not a signup funnel. -->
+  <nav class="navbar {{block "nav-class" .}}{{end}}">
     <div class="navbar-container">
       <a href="/" class="navbar-brand">
         <span class="navbar-brand-mark"><img src="/static/icon-64.png" alt="LinkNest logo" width="64" height="64" class="brand-logo-image"></span>
         <span class="navbar-brand-text">LinkNest</span>
       </a>
       <div class="navbar-links">
-        {{if .CurrentUser.ID}}
-          <a href="/dashboard">Dashboard</a>
-          <a href="/{{.CurrentUser.Slug}}">Profile</a>
-          <form method="post" action="/logout" style="display:inline"><button type="submit" class="btn btn-sm btn-secondary">Log out</button></form>
-        {{else}}
-          <a href="/login" class="btn btn-sm btn-secondary">Sign in</a>
-          <a href="/register" class="btn btn-sm btn-primary">Register</a>
+        {{block "nav-actions" .}}
+          {{if .CurrentUser.ID}}
+            <a href="/dashboard">Dashboard</a>
+            <a href="/{{.CurrentUser.Slug}}">Profile</a>
+            <form method="post" action="/logout" style="display:inline"><button type="submit" class="btn btn-sm btn-secondary">Log out</button></form>
+          {{else}}
+            <a href="/login" class="btn btn-sm btn-secondary">Sign in</a>
+            <a href="/register" class="btn btn-sm btn-primary">Register</a>
+          {{end}}
         {{end}}
       </div>
     </div>

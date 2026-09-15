@@ -52,6 +52,59 @@ func TestEveryPageRenders(t *testing.T) {
 	}
 }
 
+// renderPage renders one page through the layout the way the server does. A zero
+// viewer is a visitor who is not signed in.
+func renderPage(t *testing.T, name string, viewer models.User) string {
+	t.Helper()
+	tmpl := template.Must(template.New(name).Funcs(Funcs).ParseFS(web.Templates, "templates/layout.html", "templates/"+name))
+	page := struct {
+		CurrentUser models.User
+		Flash       *auth.Flash
+		SiteURL     string
+		Data        any
+	}{CurrentUser: viewer, SiteURL: "https://linknest.test", Data: pageData(name)}
+
+	var out strings.Builder
+	if err := tmpl.ExecuteTemplate(&out, "layout", page); err != nil {
+		t.Fatalf("%s: %v", name, err)
+	}
+	return out.String()
+}
+
+// A public profile is that person's page, so it carries no invitation to sign in
+// or register. The nav-actions override is what removes them, and because that is
+// a block in the shared layout, getting it wrong would strip the nav from every
+// page - hence the second half of this test.
+func TestProfilePageHasNoAuthChrome(t *testing.T) {
+	profile := renderPage(t, "profile.html", models.User{})
+	if strings.Contains(profile, `href="/login"`) {
+		t.Error("profile.html links to /login; a visitor should only see the person")
+	}
+	if !strings.Contains(profile, `data-share-url="https://linknest.test/ada"`) {
+		t.Error("profile.html has no share button, or it points somewhere other than the absolute profile URL")
+	}
+	if !strings.Contains(profile, "Join @ada on LinkNest") {
+		t.Error("profile.html does not offer the signup CTA")
+	}
+
+	// Nobody needs an invitation to a service they are already on, but the footer
+	// still has to say something or it renders as a bare rule.
+	signedIn := renderPage(t, "profile.html", models.User{ID: 2, Slug: "grace"})
+	if strings.Contains(signedIn, "Join @ada on LinkNest") {
+		t.Error("profile.html invites a signed-in viewer to join")
+	}
+	if !strings.Contains(signedIn, "Powered by") {
+		t.Error("profile.html renders an empty footer for a signed-in viewer")
+	}
+	if strings.Contains(signedIn, `href="/login"`) {
+		t.Error("profile.html links to /login for a signed-in viewer")
+	}
+
+	if home := renderPage(t, "home.html", models.User{}); !strings.Contains(home, `href="/login"`) {
+		t.Error("home.html lost its sign-in link; the nav-actions override is not scoped to the profile")
+	}
+}
+
 func TestHostHelper(t *testing.T) {
 	host := Funcs["host"].(func(string) string)
 	for raw, want := range map[string]string{
@@ -144,6 +197,21 @@ func isHexColour(s string) bool {
 		digits++
 	}
 	return digits == 3 || digits == 4 || digits == 6 || digits == 8
+}
+
+// A bare "a:hover" rule outranks ".btn-primary { color: white }" on specificity,
+// which turned the label of every link-shaped button dark-on-dark on hover. The
+// link styles have to exempt .btn.
+func TestLinkHoverDoesNotRecolourButtons(t *testing.T) {
+	css, err := web.Static.ReadFile("static/app.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, selector := range []string{"\na:hover", "\na:focus:", "\na:active"} {
+		if strings.Contains(string(css), selector) {
+			t.Errorf("app.css styles %q without :not(.btn); it will outrank .btn-primary's colour", strings.TrimSpace(selector))
+		}
+	}
 }
 
 // Every var(--token) in app.css must resolve, or the whole declaration is

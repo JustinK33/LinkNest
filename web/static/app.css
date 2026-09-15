@@ -64,12 +64,10 @@
   /* Transparent in light: the mark's darkest blue already reads on a pale page. */
   --logo-plate: transparent;
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #56738c 0%, #3f4d5c 100%);
-  --gradient-surface: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-  --gradient-mesh: radial-gradient(ellipse at top left, rgba(86, 115, 140, 0.08), transparent 50%),
-                   radial-gradient(ellipse at top right, rgba(86, 115, 140, 0.06), transparent 50%),
-                   radial-gradient(ellipse at bottom, rgba(86, 115, 140, 0.04), transparent 40%);
+  /* The one brand fill, for every filled button, avatar and accent. Flat by
+     design: a two-stop ramp across a pill read as a smudge rather than a colour,
+     so there are no gradients left anywhere in this stylesheet. */
+  --fill-primary: #56738c;
 
   /* Spacing */
   --space-1: 0.25rem;
@@ -175,12 +173,8 @@
     --logo-plate: #e8eaee;
 
     /* Kept dark, not lifted with --color-primary: every button and avatar filled
-       with this puts white text on it. */
-    --gradient-primary: linear-gradient(135deg, #4c6579 0%, #364453 100%);
-    --gradient-surface: linear-gradient(180deg, #1b1b1f 0%, #141417 100%);
-    --gradient-mesh: radial-gradient(ellipse at top left, rgba(125, 155, 181, 0.14), transparent 50%),
-                     radial-gradient(ellipse at top right, rgba(125, 155, 181, 0.1), transparent 50%),
-                     radial-gradient(ellipse at bottom, rgba(125, 155, 181, 0.07), transparent 40%);
+       with this puts white text on it. 7.2:1 against white. */
+    --fill-primary: #44596b;
 
     /* A black shadow on a near-black page does nothing, so these are opaque
        enough to still read as depth. */
@@ -217,9 +211,6 @@ body {
   color: var(--color-gray-900);
   background: var(--bg-primary);
   min-height: 100vh;
-  /* Subtle mesh gradient background */
-  background-image: var(--gradient-mesh);
-  background-attachment: fixed;
 }
 
 /* Reduced motion support */
@@ -346,7 +337,7 @@ body {
   left: 50%;
   width: 0;
   height: 2px;
-  background: var(--gradient-primary);
+  background: var(--fill-primary);
   transition: all var(--duration-normal) var(--ease-out-expo);
   transform: translateX(-50%);
   border-radius: var(--radius-full);
@@ -477,7 +468,7 @@ p {
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--gradient-primary);
+  background: var(--fill-primary);
 }
 
 .form-header {
@@ -607,37 +598,24 @@ textarea {
   overflow: hidden;
 }
 
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity var(--duration-normal) var(--ease-out-expo);
-}
-
-.btn:hover::before {
-  opacity: 1;
-}
-
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
 }
 
+/* Neutral shadow, not a tinted one: a wide brand-coloured halo bleeds into the
+   page and makes a flat pill look like it fades out, which is the whole reason
+   the gradient went. */
 .btn-primary {
-  background: var(--gradient-primary);
+  background: var(--fill-primary);
   color: white;
-  box-shadow: 0 4px 14px rgba(86, 115, 140, 0.35);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(86, 115, 140, 0.45);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -809,7 +787,7 @@ textarea {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--gradient-primary);
+  background: var(--fill-primary);
   opacity: 0;
   transition: opacity var(--duration-normal) var(--ease-out-expo);
 }
@@ -841,8 +819,6 @@ textarea {
 .public-link-card:hover .public-link-title {
   color: white;
 }
-
-/* Alternate styling without gradient overlay on hover */
 
 /* ===== Analytics Cards ===== */
 .analytics-grid {
@@ -947,7 +923,7 @@ textarea {
 /* ===== Dashboard Editor ===== */
 .dashboard-editor {
   min-height: calc(100vh - 80px);
-  background: var(--gradient-mesh), var(--bg-primary);
+  background: var(--bg-primary);
   padding-bottom: var(--space-12);
 }
 
@@ -1284,7 +1260,7 @@ textarea {
 /* ===== Landing Page ===== */
 .home-auth {
   padding: var(--space-16) 0;
-  background: var(--gradient-mesh), linear-gradient(180deg, var(--bg-card) 0%, var(--color-gray-50) 100%);
+  background: var(--bg-card);
 }
 
 .home-auth-inner {
@@ -1317,27 +1293,10 @@ textarea {
 }
 
 .landing-hero {
-  background: var(--gradient-mesh), linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-gray-100) 100%);
+  background: var(--color-gray-50);
   padding: var(--space-16) 0 var(--space-12);
   position: relative;
   overflow: hidden;
-}
-
-.landing-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 30%, rgba(86, 115, 140, 0.06) 0%, transparent 40%),
-              radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.05) 0%, transparent 40%);
-  animation: float 20s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-2%, -2%); }
 }
 
 .landing-hero-inner {
@@ -1420,14 +1379,6 @@ textarea {
   color: white;
   position: relative;
   overflow: hidden;
-}
-
-.landing-feature-band::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at top right, rgba(86, 115, 140, 0.15), transparent 50%),
-              radial-gradient(ellipse at bottom left, rgba(6, 182, 212, 0.1), transparent 50%);
 }
 
 .landing-network-strip {
@@ -1614,7 +1565,7 @@ textarea {
 }
 
 .landing-nfc-band {
-  background: linear-gradient(165deg, var(--surface-info) 0%, var(--surface-muted) 100%);
+  background: var(--surface-info);
   padding: var(--space-14) 0;
 }
 
@@ -1636,7 +1587,9 @@ textarea {
 .nfc-tag-card {
   border-radius: 18px;
   border: 1px solid var(--border-info);
-  background: linear-gradient(145deg, var(--bg-card), var(--surface-info));
+  /* Card surface, not the band's own --surface-info: the two were only told
+     apart by the old gradient, and now the card has to lift off it. */
+  background: var(--bg-card);
   box-shadow: 0 14px 30px rgba(30, 64, 175, 0.12);
   padding: var(--space-6);
   text-align: center;
@@ -1686,7 +1639,7 @@ textarea {
   width: 78%;
   height: 260px;
   border-radius: 22px;
-  background: var(--gradient-primary);
+  background: var(--fill-primary);
   box-shadow: 0 14px 24px rgba(63, 77, 92, 0.25);
 }
 
@@ -1706,7 +1659,7 @@ textarea {
   width: 72px;
   height: 72px;
   border-radius: 999px;
-  background: var(--gradient-primary);
+  background: var(--fill-primary);
   color: white;
   display: grid;
   place-items: center;
@@ -1757,6 +1710,14 @@ textarea {
   .navbar-links {
     justify-content: center;
     flex-wrap: wrap;
+  }
+
+  /* A profile page's nav is a brand and one Share pill, which fit side by side
+     even at 320px. Stacking them the way the app nav has to would push the
+     person's card down behind two rows of our chrome. */
+  .navbar-profile .navbar-container {
+    flex-direction: row;
+    align-items: center;
   }
 
   .profile-card {
@@ -1937,7 +1898,10 @@ a {
   transition: color var(--duration-normal) var(--ease-out-expo);
 }
 
-a:hover {
+/* :not(.btn) because a:hover outranks .btn-primary's own "color: white" on
+   specificity, so every link-shaped button's label went dark-on-dark the moment
+   you pointed at it. A button carries its own colours in both states. */
+a:not(.btn):hover {
   color: var(--color-primary-dark);
 }
 
@@ -2013,6 +1977,50 @@ select:focus-visible {
 .public-profile-footer p {
   color: var(--color-gray-500);
   font-size: 0.875rem;
+}
+
+/* The signup pill that replaces the "Powered by" line for a signed-out visitor.
+   .btn-lg's padding at the pill radius, but not .btn-lg itself, whose font size
+   wraps a long slug onto two lines at 320px. */
+.profile-join-cta {
+  padding: 0.9rem 1.75rem;
+  border-radius: var(--radius-full);
+}
+
+.share-button svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Confirmation for the clipboard fallback. Same colours as .flash so the two
+   read as one system, but fixed to the viewport: the share button is up in the
+   navbar and the visitor may have scrolled anywhere down the page. */
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-6);
+  z-index: var(--z-tooltip);
+  max-width: calc(100vw - 2 * var(--space-4));
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+  color: var(--accent-success);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, var(--space-3));
+  transition: opacity var(--duration-normal) var(--ease-out-expo),
+    transform var(--duration-normal) var(--ease-out-expo);
+  pointer-events: none;
+}
+
+.share-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 /* ===== Error Page ===== */
