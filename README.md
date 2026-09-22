@@ -58,17 +58,17 @@ Both aggregators do their work in a single `INSERT ... SELECT ... GROUP BY ... O
 
 ## What building this taught me
 
-**`sync.Once` around a database connection caches the failure too.** This one is from the stretch when the app ran as a serverless function rather than on a VM, and the logs showed every request failing with "startup failed: context deadline exceeded". TiDB Cloud Serverless auto-pauses when idle, and waking it on a cold connection took longer than the 5 second ping timeout in `db.Open`. That part was a one-line fix. The real bug was that `api/index.go` used `sync.Once` to connect lazily, so a single slow wake-up poisoned the container permanently: every request after it kept failing until Vercel happened to recycle the instance. A mutex-guarded retry means a transient timeout stays transient. Serverless plus an auto-pausing database means cold start is the normal case, not the edge case.
+**`sync.Once` around a database connection caches the failure too.**
+TiDB Cloud Serverless auto-pauses when idle, and one cold wake-up slower than the 5 second ping timeout poisoned the container permanently: every later request failed until Vercel recycled the instance.
+A mutex-guarded retry keeps a transient timeout transient, because serverless plus an auto-pausing database makes cold start the normal case rather than the edge case.
 
-**`internal/` is a compiler rule, and someone else's build shim can break it.** Vercel's Go runtime wraps the handler in a synthetic `main__vc__go__.go` compiled as a loose file in the `command-line-arguments` pseudo-package, and Go's internal-visibility rule rejects that regardless of where the importer actually lives. It built fine with `go build ./...` and failed only through Vercel. Every `internal/X` package moved to `X` at the repo root. This is an application binary rather than a library, so the privacy `internal/` was enforcing wasn't protecting anything from anyone.
+**`internal/` is a compiler rule, and someone else's build shim can break it.**
+Vercel's Go runtime wraps the handler in a synthetic file compiled as a loose `command-line-arguments` package, which Go's internal-visibility rule rejects no matter where the importer sits, so it built with `go build ./...` and failed only through Vercel.
+Every `internal/X` moved to the repo root, since this is an application binary and that privacy was protecting nothing from anyone.
 
-**Validation at the edges is validation you can skip.** Email format, username charset, and every length were unchecked, and uniqueness was left entirely to the database, so a duplicate signup surfaced as a raw driver error and an over-long name would have surfaced as a MySQL 1406 or a silent truncation. It all moved into the store. The limits deliberately sit below the column widths so a long value produces a sentence the user can act on. The username pattern is also stricter than the slug generator, because the generator drops characters it doesn't recognise, which meant `"!!!"` was a valid signup with an empty public URL.
-
-**`"//evil.example"` looks like a path and isn't one.** Link URLs are restricted to `http`, `https`, `mailto`, `tel`, and root-relative paths, and a host is required, since `"https://"` on its own parses without error. Protocol-relative URLs are rejected by name because they read like a same-site path and leave the site.
-
-**CSS bugs are invisible in exactly one colour scheme, so a test has to look.** Three failures in one branch were undetectable until something checked for them: an `@import` for fonts that every browser had silently dropped for the life of the file, an undefined `var(--space-14)` that collapsed a whole band on the landing page, and opaque hex colours outside the token blocks that were fine in light mode and unreadable in dark. There's now a test asserting every CSS variable is defined and another rejecting opaque colours outside `:root` and the media query, translucent `rgba()` allowed because it composites over whatever is beneath it. I mutation-tested that second one by injecting a hex and a white fill to confirm it actually fails.
-
-**Rendering the templates without a server was worth building.** `preview/` renders the real templates with fake data and no database, which is how the dark scheme and the 375px layout got reviewed page by page. It needs `app.Funcs` and `app.PageNames` exported so it renders pages the same way the server does instead of keeping a second copy that drifts. The `?scroll`, `?probe`, and `/frame` handles exist because headless Chrome screenshots the window rather than the document, and clamps its own window to 500px wide on macOS.
+**CSS bugs are invisible in exactly one colour scheme, so a test has to look.**
+One branch hid three failures nothing could see: a font `@import` every browser had silently dropped, an undefined `var(--space-14)` collapsing a whole landing-page band, and opaque hex colours that were fine in light mode and unreadable in dark.
+There are now tests asserting every CSS variable is defined and rejecting opaque colours outside the token blocks, and I mutation-tested the second one to confirm it actually fails.
 
 ## Documentation
 
