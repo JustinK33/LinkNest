@@ -102,3 +102,7 @@ go build ./cmd/linknest
 Deployment is the same Compose stack on a GCP VM, with `DATABASE_URL` pointed at TiDB Cloud instead of the local MySQL container, which needs `?tls=true`.
 nginx sits in front of it: [ops/nginx/linknest.info.conf](ops/nginx/linknest.info.conf) is the server block, [ops/nginx/docker/init-letsencrypt.sh](ops/nginx/docker/init-letsencrypt.sh) issues the first certificate, and [ops/nginx/certbot-renew-hook.sh](ops/nginx/certbot-renew-hook.sh) reloads nginx after a renewal.
 Running the whole binary rather than the serverless wrapper is what keeps the rollups advancing, since a background ticker needs a process that stays up.
+
+## License
+
+MIT - see [LICENSE](LICENSE).

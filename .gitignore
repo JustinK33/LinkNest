@@ -3,6 +3,7 @@
 /.env.*
 
 # Local build and runtime output.
+/linknest
 /bin/
 /dist/
 /tmp/
