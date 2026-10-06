@@ -29,6 +29,7 @@ The whole thing has two direct dependencies. Everything else is the standard lib
 | Metrics | A hand-rolled in-memory registry rendered as Prometheus text |
 | Deploy | A GCP VM running the container behind nginx, with Certbot for TLS |
 | Load testing | k6 |
+| Infrastructure as code | Terraform with the `kreuzwerker/docker` provider |
 
 `go.mod` has exactly two non-indirect requires. Sessions, routing, CSRF, and the metrics format are standard library plus code in this repo.
 
@@ -55,6 +56,11 @@ Every write goes through `store/store.go`, including validation, so no handler a
 Both aggregators do their work in a single `INSERT ... SELECT ... GROUP BY ... ON DUPLICATE KEY UPDATE`, so the database aggregates in one pass rather than the app looping, and each run is bracketed by a `worker_runs` row that goes from `running` to `succeeded` with a `rows_processed` count.
 
 ## What building this taught me
+
+**Marking a Terraform variable `sensitive` hides it from the terminal, not from the state file.**
+`db_password` in [linknest-infra/variables.tf](linknest-infra/variables.tf) is `sensitive = true`, and `plan` and `apply` print it as `(sensitive value)`, so I assumed it was protected.
+Then I opened `terraform.tfstate` and the container's `POSTGRES_PASSWORD` was sitting there in plain text, because state records every attribute of what was built.
+The `.gitignore` now excludes `.terraform/`, `*.tfstate`, and `*.tfstate.*`, and only `.terraform.lock.hcl` is committed so the provider version stays pinned.
 
 **CSS bugs are invisible in exactly one colour scheme, so a test has to look.**
 One branch hid three failures nothing could see: a font `@import` every browser had silently dropped, an undefined `var(--space-14)` collapsing a whole landing-page band, and opaque hex colours that were fine in light mode and unreadable in dark.
@@ -92,6 +98,18 @@ go build ./cmd/linknest
 Deployment is the same Compose stack, the app and MySQL, on a GCP VM.
 nginx sits in front of it: [ops/nginx/linknest.info.conf](ops/nginx/linknest.info.conf) is the server block, [ops/nginx/docker/init-letsencrypt.sh](ops/nginx/docker/init-letsencrypt.sh) issues the first certificate, and [ops/nginx/certbot-renew-hook.sh](ops/nginx/certbot-renew-hook.sh) reloads nginx after a renewal.
 Running the whole binary is what keeps the rollups advancing, since a background ticker needs a process that stays up.
+
+[linknest-infra/](linknest-infra/) is my first Terraform config.
+It declares a Docker network, a named volume, and a Postgres 16 container on host port 5434, and is not wired to the app yet, which still runs on MySQL from Compose:
+
+```sh
+cd linknest-infra
+terraform init
+TF_VAR_db_password=choose-one terraform plan
+TF_VAR_db_password=choose-one terraform apply
+```
+
+Running `plan` again right after `apply` should report "No changes", which is Terraform confirming that the config, the state file, and the running containers agree.
 
 ## License
 

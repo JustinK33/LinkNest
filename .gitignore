@@ -23,3 +23,7 @@
 
 # Docker and local deployment secrets.
 /.kamal/secrets
+
+.terraform/
+*.tfstate
+*.tfstate.*
