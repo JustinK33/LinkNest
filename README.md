@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinK33/LinkNest/actions/workflows/ci.yml)
 
-A link-in-bio app in Go and MySQL/TiDB where every click is recorded as an event and rolled up into analytics.
+A link-in-bio app in Go and MySQL where every click is recorded as an event and rolled up into analytics.
 
 ## What it does
 
@@ -23,12 +23,13 @@ The whole thing has two direct dependencies. Everything else is the standard lib
 | Layer | What it uses |
 | --- | --- |
 | Language | Go 1.26 |
-| Database | MySQL and TiDB Cloud Serverless, via `go-sql-driver/mysql` |
+| Database | MySQL |
 | Passwords | bcrypt from `golang.org/x/crypto` |
 | Templates | `html/template`, compiled into the binary with `embed` |
 | Metrics | A hand-rolled in-memory registry rendered as Prometheus text |
 | Deploy | A GCP VM running the container behind nginx, with Certbot for TLS |
 | Load testing | k6 |
+| Infrastructure as code | Terraform with the `kreuzwerker/docker` provider |
 
 `go.mod` has exactly two non-indirect requires. Sessions, routing, CSRF, and the metrics format are standard library plus code in this repo.
 
@@ -51,20 +52,15 @@ flowchart TD
 It runs on a GCP VM: the container from `docker-compose.yaml` listening on 8080, nginx in front of it terminating TLS and caching static assets, and Certbot renewing the certificate for `linknest.info`.
 `cmd/linknest/main.go` is the entry point that deployment uses, and it starts both halves of the app: the HTTP server, and the worker manager whose tickers fire the hourly aggregator every 5 minutes and the daily one every 30.
 
-There is a second entry point, `api/index.go`, left from a period when this ran as a single serverless function. It wraps only the server, so the rollups don't run under it: pages, auth, links, and click tracking work, and the aggregate tables just stop advancing. It's why two of the lessons below are about Vercel.
-
 Every write goes through `store/store.go`, including validation, so no handler and no future non-form code path can write a row that skipped a check.
 Both aggregators do their work in a single `INSERT ... SELECT ... GROUP BY ... ON DUPLICATE KEY UPDATE`, so the database aggregates in one pass rather than the app looping, and each run is bracketed by a `worker_runs` row that goes from `running` to `succeeded` with a `rows_processed` count.
 
 ## What building this taught me
 
-**`sync.Once` around a database connection caches the failure too.**
-TiDB Cloud Serverless auto-pauses when idle, and one cold wake-up slower than the 5 second ping timeout poisoned the container permanently: every later request failed until Vercel recycled the instance.
-A mutex-guarded retry keeps a transient timeout transient, because serverless plus an auto-pausing database makes cold start the normal case rather than the edge case.
-
-**`internal/` is a compiler rule, and someone else's build shim can break it.**
-Vercel's Go runtime wraps the handler in a synthetic file compiled as a loose `command-line-arguments` package, which Go's internal-visibility rule rejects no matter where the importer sits, so it built with `go build ./...` and failed only through Vercel.
-Every `internal/X` moved to the repo root, since this is an application binary and that privacy was protecting nothing from anyone.
+**Marking a Terraform variable `sensitive` hides it from the terminal, not from the state file.**
+`db_password` in [linknest-infra/variables.tf](linknest-infra/variables.tf) is `sensitive = true`, and `plan` and `apply` print it as `(sensitive value)`, so I assumed it was protected.
+Then I opened `terraform.tfstate` and the container's `POSTGRES_PASSWORD` was sitting there in plain text, because state records every attribute of what was built.
+The `.gitignore` now excludes `.terraform/`, `*.tfstate`, and `*.tfstate.*`, and only `.terraform.lock.hcl` is committed so the provider version stays pinned.
 
 **CSS bugs are invisible in exactly one colour scheme, so a test has to look.**
 One branch hid three failures nothing could see: a font `@import` every browser had silently dropped, an undefined `var(--space-14)` collapsing a whole landing-page band, and opaque hex colours that were fine in light mode and unreadable in dark.
@@ -72,7 +68,7 @@ There are now tests asserting every CSS variable is defined and rejecting opaque
 
 ## Documentation
 
-- [docs/DESIGN.md](docs/DESIGN.md) covers the write path in more depth: the event log, the index-per-query-path list, the k6 numbers (28,835 tracking requests at ~958/sec, 21.9 ms p95, no duplicate keys leaked), and the known gap that ingestion has no queue in front of it. Its SQL snippets still show the Postgres `ON CONFLICT` spelling from before the TiDB port; the shipped statements use `ON DUPLICATE KEY UPDATE`.
+- [docs/DESIGN.md](docs/DESIGN.md) covers the write path in more depth: the event log, the index-per-query-path list, the k6 numbers (28,835 tracking requests at ~958/sec, 21.9 ms p95, no duplicate keys leaked), and the known gap that ingestion has no queue in front of it. Its SQL snippets still show the Postgres `ON CONFLICT` spelling from before the MySQL port; the shipped statements use `ON DUPLICATE KEY UPDATE`.
 - [db/migrations/001_init_mysql.sql](db/migrations/001_init_mysql.sql) is the schema, applied on boot.
 - [loadtest/k6-clicks.js](loadtest/k6-clicks.js) is the ingestion load test the measured numbers come from.
 
@@ -99,9 +95,21 @@ go test ./...
 go build ./cmd/linknest
 ```
 
-Deployment is the same Compose stack on a GCP VM, with `DATABASE_URL` pointed at TiDB Cloud instead of the local MySQL container, which needs `?tls=true`.
+Deployment is the same Compose stack, the app and MySQL, on a GCP VM.
 nginx sits in front of it: [ops/nginx/linknest.info.conf](ops/nginx/linknest.info.conf) is the server block, [ops/nginx/docker/init-letsencrypt.sh](ops/nginx/docker/init-letsencrypt.sh) issues the first certificate, and [ops/nginx/certbot-renew-hook.sh](ops/nginx/certbot-renew-hook.sh) reloads nginx after a renewal.
-Running the whole binary rather than the serverless wrapper is what keeps the rollups advancing, since a background ticker needs a process that stays up.
+Running the whole binary is what keeps the rollups advancing, since a background ticker needs a process that stays up.
+
+[linknest-infra/](linknest-infra/) is my first Terraform config.
+It declares a Docker network, a named volume, and a Postgres 16 container on host port 5434, and is not wired to the app yet, which still runs on MySQL from Compose:
+
+```sh
+cd linknest-infra
+terraform init
+TF_VAR_db_password=choose-one terraform plan
+TF_VAR_db_password=choose-one terraform apply
+```
+
+Running `plan` again right after `apply` should report "No changes", which is Terraform confirming that the config, the state file, and the running containers agree.
 
 ## License
 
