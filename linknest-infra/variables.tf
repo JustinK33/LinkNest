@@ -20,3 +20,8 @@ variable "db_port" {
   type    = number
   default = 5434
 }
+
+variable "redis_port" {
+  type    = number
+  default = 5438
+}

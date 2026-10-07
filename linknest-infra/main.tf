@@ -58,3 +58,30 @@ resource "docker_container" "postgres" {
     name = docker_network.linknest.name
   }
 }
+
+resource "docker_image" "redis" {
+  name = "redis:7"
+}
+
+resource "docker_volume" "redis_data" {
+  name = "linknest-redis_data"
+}
+
+resource "docker_container" "redis" {
+  name  = "linknest_redis"
+  image = docker_image.redis.image_id
+
+  ports {
+    internal = 6379
+    external = var.redis_port
+  }
+
+  volumes {
+    volume_name    = docker_volume.redis_data.name
+    container_path = "/data" # redis stores its data in /data
+  }
+
+  networks_advanced {
+    name = docker_network.linknest.name
+  }
+}
